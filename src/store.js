@@ -3,6 +3,20 @@ import { useEffect, useState } from 'react'
 import { seedExtras } from './seed'
 const KEY = 'bni-hub-v1'
 export const TEAMS = ['Industrial Procurement','Real Estate & Construction','Healthcare & Wellness','Finance & Insurance','Food & Hospitality','Education & Training','Technology & IT','Manufacturing & Engineering','Retail & Consumer','Marketing & Media','Legal & Professional','Logistics & Transport']
+export const TEAM_QUOTES = [
+  'Building value through trusted supply chains.',
+  'Creating places where communities thrive.',
+  'Connecting care with healthier lives.',
+  'Turning trusted advice into lasting prosperity.',
+  'Bringing people together through great experiences.',
+  'Inspiring growth through knowledge and learning.',
+  'Making tomorrow work better with technology.',
+  'Engineering ideas into lasting impact.',
+  'Making everyday choices matter.',
+  'Growing businesses through powerful stories.',
+  'Building confidence through trusted expertise.',
+  'Keeping business moving, connected, and on time.',
+]
 export const SRC = ['Visitor visit','Meeting','Joint call','1-to-1','Direct referral']
 export const STG = ['Thanked','Value confirmed','Converted to business']
 export const RS = ['Passed','Contacted','Quoted','Won','Lost']
@@ -24,13 +38,47 @@ function mk() {
 let db; try { db = JSON.parse(localStorage.getItem(KEY)) } catch {}
 const base = mk(); db = db || base
 for (const k of ['opps', 'connects', 'moms', 'acts']) if (!db[k]) db[k] = base[k]
+const baseTeamDetails = TEAMS.map((name, i) => ({ name, logo: '', quote: TEAM_QUOTES[i] }))
+if (!Array.isArray(db.teamDetails)) db.teamDetails = baseTeamDetails.map(x => ({ ...x }))
+db.teamDetails = [
+  ...baseTeamDetails.map((team, i) => ({ ...team, ...(db.teamDetails[i] || {}) })),
+  ...db.teamDetails.slice(baseTeamDetails.length).map(team => ({ ...team })),
+]
+TEAMS.splice(0, TEAMS.length, ...db.teamDetails.map(team => team.name))
 db.users.forEach(u => { if (u.turn == null) u.turn = (base.users.find(b => b.id === u.id && b.name === u.name) || {}).turn || 0 })
 let uid = Number(sessionStorage.getItem('bni-uid')) || null
 const subs = new Set(), ping = () => subs.forEach(f => f())
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)) } catch {} ping() }
 export const useDB = () => { const [, t] = useState(0); useEffect(() => { const f = () => t(x => x + 1); subs.add(f); return () => subs.delete(f) }, []); return db }
-export const resetDemo = () => { db = mk(); save() }
+export const resetDemo = () => { db = mk(); db.teamDetails = baseTeamDetails.map(x => ({ ...x })); TEAMS.splice(0, TEAMS.length, ...db.teamDetails.map(team => team.name)); save() }
 export const me = () => db.users.find(u => u.id === uid)
+export const teamDetails = id => db.teamDetails[id - 1] || null
+export function addTeamDetails(fields) {
+  const by = me()
+  if (!by || by.role !== 'sa') return 'Only a Super Admin can add a power team.'
+  const name = typeof fields.name === 'string' ? fields.name.trim() : ''
+  const quote = typeof fields.quote === 'string' ? fields.quote.trim() : ''
+  const logo = typeof fields.logo === 'string' ? fields.logo.trim() : ''
+  if (!name || !quote) return 'Enter a team name and quote.'
+  if (TEAMS.some(team => team.toLowerCase() === name.toLowerCase())) return 'A team with that name already exists.'
+  if (logo && !/^https?:\/\/\S+$/i.test(logo)) return 'Enter a valid http or https logo URL, or leave it blank.'
+  db.teamDetails.push({ name, quote, logo })
+  TEAMS.push(name)
+  save()
+  return ''
+}
+export function updateTeamDetails(id, fields) {
+  const by = me()
+  if (!by || by.role !== 'sa') return 'Only a Super Admin can update team details.'
+  if (!Number.isInteger(id) || id < 1 || id > TEAMS.length) return 'Choose a valid power team.'
+  const name = fields.name.trim(), quote = fields.quote.trim(), logo = fields.logo.trim()
+  if (!name || !quote) return 'Enter a team name and quote.'
+  if (logo && !/^https?:\/\/\S+$/i.test(logo)) return 'Enter a valid http or https logo URL, or leave it blank.'
+  db.teamDetails[id - 1] = { name, quote, logo }
+  TEAMS[id - 1] = name
+  save()
+  return ''
+}
 export const U = id => db.users.find(u => u.id == id)
 export const goalOf = u => u.bni * 0.67
 export const won = id => db.notes.filter(n => n.st === 2 && n.g == id).reduce((a, n) => a + n.v, 0)
@@ -46,13 +94,24 @@ export function logout() { uid = null; sessionStorage.removeItem('bni-uid'); pin
 // Super Admin registers Team Heads; Team Heads register Members.
 export function register(f) {
   const by = me(), e = f.email.trim().toLowerCase()
+  if (!by) return 'Sign in before registering people.'
   if (!f.name.trim() || !e.includes('@') || f.pw.length < 6) return 'Enter a name, a valid email and a password of 6+ characters.'
   if (db.users.some(u => u.email === e)) return 'That email is already registered.'
   let role, team
-  if (by.role === 'sa') { role = 'th'; team = +f.team; if (!team || headOf(team)) return 'Choose a power team that has no head yet.' }
+  if (f.role) {
+    if (by.role === 'sa') {
+      role = f.role
+      if (!['sa', 'th', 'mb'].includes(role)) return 'Choose a valid account type.'
+      team = role === 'sa' ? null : +f.team
+      if (role !== 'sa' && (!team || !TEAMS[team - 1])) return 'Choose a valid power team.'
+      if (role === 'th' && headOf(team)) return 'That power team already has a head.'
+    } else if (by.role === 'th' && f.role === 'mb') { role = 'mb'; team = by.team }
+    else return 'You do not have permission to create that account type.'
+  }
+  else if (by.role === 'sa') { role = 'th'; team = +f.team; if (!team || headOf(team)) return 'Choose a power team that has no head yet.' }
   else if (by.role === 'th') { role = 'mb'; team = by.team }
   else return 'Only a Super Admin or Team Head can register people.'
-  db.users.push({ id: Math.max(...db.users.map(u => u.id)) + 1, name: f.name.trim(), email: e, pw: f.pw, role, team, cat: f.cat.trim() || 'Not set', bni: 0, turn: 0 })
+  db.users.push({ id: Math.max(...db.users.map(u => u.id)) + 1, name: f.name.trim(), email: e, pw: f.pw, role, team, business: (f.business || '').trim(), cat: f.cat.trim() || 'Not set', bni: 0, turn: 0 })
   save(); return ''
 }
 export function setGoal(id, v) { const u = U(id), b = me(); if (b.role === 'sa' || (b.role === 'th' && u.team == b.team)) { u.bni = +v || 0; save() } }

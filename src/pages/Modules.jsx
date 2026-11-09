@@ -1,18 +1,488 @@
-import Icon from '../icons'
-import Select from '../Select'
-import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { useDB, me, U, TEAMS, teamUsers, headOf, addRef, addOne, setRef, SRC, RS, att, won, rv, goalOf, fm } from '../store'
-import { Table, Pill, Tiles } from '../ui'
-import { Columns, Donut, Line } from '../charts'
+import Icon from "../icons";
+import Select from "../Select";
+import { useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import {
+  useDB,
+  me,
+  U,
+  TEAMS,
+  teamUsers,
+  headOf,
+  addRef,
+  addOne,
+  setRef,
+  SRC,
+  RS,
+  att,
+  won,
+  rv,
+  goalOf,
+  fm,
+  register,
+} from "../store";
+import { Table, Pill, Tiles } from "../ui";
+import { Columns, Donut, Line } from "../charts";
+import { toastOk } from "../toast";
 
-const initials = n => n.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()
-const scopeUsers = (db,u) => u.role==='sa' ? db.users.filter(x=>x.role!=='sa') : u.role==='th' ? teamUsers(u.team) : teamUsers(u.team)
-function PageHead({eyebrow,title,sub,action}) { return <div className="module-head"><div><div className="eyebrow">{eyebrow}</div><h1>{title}</h1><p>{sub}</p></div>{action}</div> }
-function MemberCard({x}) { return <article className="member-card"><div className="member-card-top"><div className="member-avatar">{initials(x.name)}</div><Pill c="g">Active</Pill></div><h3>{x.name}</h3><p className="member-company">{x.cat||'Business category not added'}</p><div className="member-meta"><span>⌖ {TEAMS[(x.team||1)-1]}</span><span>✉ {x.email}</span></div><Link className="profile-link" to={`/members/${x.id}`}>View Profile <b>→</b></Link></article> }
-export function Members(){const db=useDB(),u=me(),[q,Sq]=useState(''),[team,St]=useState('all');const people=scopeUsers(db,u).filter(x=>x.role!=='sa').filter(x=>(team==='all'||x.team===+team)&&`${x.name} ${x.cat} ${x.email}`.toLowerCase().includes(q.toLowerCase()));return <><PageHead eyebrow="MEMBER NETWORK" title="Members Directory" sub="Connect, collaborate and grow with your Power Team members." action={u.role==='th'?<Link className="btn" to="/teams"><Icon name="plus" size={15} stroke={2.6} /> Add Member</Link>:null}/><div className="card filter-row"><input className="inp" placeholder="Search by name, business or category..." value={q} onChange={e=>Sq(e.target.value)}/>{u.role==='sa'&&<Select className="inp" value={team} onChange={e=>St(e.target.value)}><option value="all">All Power Teams</option>{TEAMS.map((t,i)=><option value={i+1} key={t}>{t}</option>)}</Select>}<span className="filter-count">{people.length} members</span></div><div className="member-directory-grid">{people.map(x=><MemberCard x={x} key={x.id}/>)}</div></>}
-export function Profile(){const db=useDB(),u=me(),{id:routeId}=useParams(),id=Number(routeId),x=db.users.find(a=>a.id===id)||u;return <><PageHead eyebrow="MEMBER PROFILE" title={x.name} sub="Professional information and Power Team activity." action={<Link className="btn-s" to="/members">← Back to Members</Link>}/><div className="profile-layout"><section className="card profile-main"><div className="profile-hero"><div className="profile-avatar">{initials(x.name)}</div><div><h2>{x.name}</h2><p>{x.cat||'Business category'}</p><Pill c="g">Active Member</Pill></div></div><h3>Professional Details</h3><div className="profile-fields"><div><small>Business category</small><b>{x.cat||'Not provided'}</b></div><div><small>Email address</small><b>{x.email}</b></div><div><small>Power Team</small><b>{x.team?TEAMS[x.team-1]:'Association'}</b></div><div><small>Role</small><b>{x.role==='th'?'Power Team Head':'Member'}</b></div></div></section><section className="card"><h3>Performance Snapshot</h3><div className="profile-stat"><span>Business generated</span><b>{fm(won(x.id))}</b></div><div className="profile-stat"><span>Business received</span><b>{fm(rv(x.id))}</b></div><div className="profile-stat"><span>Attendance</span><b>{att(x.id)==null?'—':`${Math.round(att(x.id))}%`}</b></div><div className="profile-stat"><span>Business goal</span><b>{fm(goalOf(x))}</b></div></section></div><div className="card mt-4"><h3>Recent Activity</h3><p className="text-gray-500 text-sm mt-2">Member activity and achievements will appear here as records are added.</p></div></>}
-export function OneToOnes(){const db=useDB(),u=me(),[to,St]=useState(''),[msg,Sm]=useState('');const people=scopeUsers(db,u).filter(x=>x.id!==u.id),list=db.ones.filter(o=>u.role==='sa'||U(o.f)?.team===u.team||U(o.to)?.team===u.team);const add=()=>{if(!to)return Sm('Select a member first.');addOne(u.id,+to);St('');Sm('1-to-1 recorded.');};return <><PageHead eyebrow="MEMBER CONNECTIONS" title="1-to-1 Meetings" sub="Build stronger relationships through individual member meetings."/>{u.role!=='mb'&&<div className="card form-inline"><Select className="inp" value={to} onChange={e=>St(e.target.value)}><option value="">Select member</option>{people.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</Select><button className="btn" onClick={add}><Icon name="plus" size={15} stroke={2.6} /> Record 1-to-1</button>{msg&&<span className="text-sm text-green-700">{msg}</span>}</div>}<Tiles items={[["Total 1-to-1s",list.length],["Your 1-to-1s",list.filter(x=>x.f===u.id||x.to===u.id).length],["Team members",people.length]]}/><div className="mt-4"><Table head={['Date','Initiated by','Meeting with','Activity']} rows={list.map((o,i)=><tr key={i}><td className="td">{o.d}</td><td className="td">{U(o.f)?.name}</td><td className="td">{U(o.to)?.name}</td><td className="td"><Pill c="g">Completed</Pill></td></tr>)}/></div></>}
-export function Business(){const db=useDB(),u=me(),list=db.notes.filter(n=>n.st===2&&(u.role==='sa'||U(n.g)?.team===u.team||U(n.to)?.team===u.team));return <><PageHead eyebrow="BUSINESS TRACKING" title="Business Generated" sub="Monitor confirmed business and contribution across the Power Team."/><Tiles items={[["Confirmed records",list.length],["Business value",fm(list.reduce((a,n)=>a+n.v,0))],["Members contributing",new Set(list.map(n=>n.g)).size]]}/><div className="mt-4"><Table head={['Date','Business generated by','Referral credited to','Business details','Value']} rows={list.map((n,i)=><tr key={i}><td className="td">{n.d}</td><td className="td">{U(n.g)?.name}</td><td className="td">{U(n.to)?.name}</td><td className="td">{n.det}</td><td className="td font-semibold">{fm(n.v)}</td></tr>)}/></div></>}
-export function Reports(){const db=useDB(),u=me(),people=scopeUsers(db,u),ids=people.map(p=>p.id);const refs=db.refs.filter(r=>ids.includes(r.f)),jc=db.acts.filter(a=>a.t==='Joint call'&&ids.includes(a.f)),ones=db.ones.filter(o=>ids.includes(o.f));const row=p=>[refs.filter(r=>r.f===p.id).length,jc.filter(a=>a.f===p.id).length,ones.filter(o=>o.f===p.id).length];const pts=db.meets.map(m=>{const rec=ids.filter(i=>i in m.s);return{l:m.d.split('-').slice(0,2).join(' '),v:rec.length?Math.round(rec.filter(i=>m.s[i]==='P').length/rec.length*100):0}});return <><PageHead eyebrow="INSIGHTS & ANALYTICS" title="Reports" sub="Member engagement, referrals and business outcomes at a glance."/><Tiles items={[["Members",people.length],["Referrals",refs.length],["Joint calls",jc.length],["1-to-1s",ones.length],["Business won",fm(db.notes.filter(n=>n.st===2&&(ids.includes(n.g)||ids.includes(n.to))).reduce((a,n)=>a+n.v,0))]]}/><div className="chart-grid c21 mt-4"><Columns title="Participation by member" series={['Referrals','Joint calls','1-to-1s']} groups={people.map(p=>({l:p.name.split(' ')[0],v:row(p)}))}/><Donut title="Activity mix" data={[{l:'Referrals',v:refs.length},{l:'Joint calls',v:jc.length},{l:'1-to-1s',v:ones.length}]}/></div><Line title="Attendance by meeting" hint="% present" points={pts} fmt={v=>`${v}%`} max={100}/></>}
-export function Settings(){const u=me();return <><PageHead eyebrow="PREFERENCES" title="Settings" sub="Account details and portal preferences."/><div className="card max-w-2xl"><h3 className="font-semibold mb-4">My Account</h3><div className="profile-fields"><div><small>Name</small><b>{u.name}</b></div><div><small>Email</small><b>{u.email}</b></div><div><small>Role</small><b>{u.role==='sa'?'Super Admin':u.role==='th'?'Power Team Head':'Member'}</b></div><div><small>Power Team</small><b>{u.team?TEAMS[u.team-1]:'Association-wide'}</b></div></div><p className="text-xs text-gray-500 mt-5">This prototype stores demo account information in this browser. Production account security and password management must be connected to a secure backend.</p></div></>}
+const initials = (n) =>
+  n
+    .split(" ")
+    .map((x) => x[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+const scopeUsers = (db, u) =>
+  u.role === "sa"
+    ? db.users.filter((x) => x.role !== "sa")
+    : u.role === "th"
+    ? teamUsers(u.team)
+    : teamUsers(u.team);
+function PageHead({ eyebrow, title, sub, action }) {
+  return (
+    <div className="module-head">
+      <div>
+        <div className="eyebrow">{eyebrow}</div>
+        <h1>{title}</h1>
+        <p>{sub}</p>
+      </div>
+      {action}
+    </div>
+  );
+}
+function MemberCard({ x }) {
+  return (
+    <article className="member-card">
+      <div className="member-card-top">
+        <div className="member-avatar">{initials(x.name)}</div>
+        <Pill c="g">Active</Pill>
+      </div>
+      <h3>{x.name}</h3>
+      <p className="member-company">{x.business || "Business name not added"}</p>
+      <p className="member-category">{x.cat || "Business category not added"}</p>
+      <div className="member-meta">
+        <span>⌖ {TEAMS[(x.team || 1) - 1]}</span>
+        <span>✉ {x.email}</span>
+      </div>
+      <Link className="profile-link" to={`/members/${x.id}`}>
+        View Profile <b>→</b>
+      </Link>
+    </article>
+  );
+}
+export function Members() {
+  const db = useDB(),
+    u = me(),
+    [q, Sq] = useState(""),
+    [team, St] = useState("all"),
+    [formOpen, setFormOpen] = useState(false),
+    [f, setF] = useState({ name: "", email: "", business: "", cat: "", pw: "", role: "mb", team: "" }),
+    [err, setErr] = useState("");
+  const isSA = u.role === "sa", canRegister = u.role !== "mb";
+  const set = key => e => {
+    setF(current => ({ ...current, [key]: e.target.value, ...(key === "role" && e.target.value === "sa" ? { team: "" } : {}) }));
+    setErr("");
+  };
+  const reset = () => {
+    setF({ name: "", email: "", business: "", cat: "", pw: "", role: "mb", team: "" });
+    setErr("");
+  };
+  const submit = e => {
+    e.preventDefault();
+    const result = register(f);
+    if (result) return setErr(result);
+    toastOk(`${f.name.trim()} added successfully.`);
+    reset();
+    setFormOpen(false);
+  };
+  const people = scopeUsers(db, u)
+    .filter((x) => x.role !== "sa")
+    .filter(
+      (x) =>
+        (team === "all" || x.team === +team) &&
+        `${x.name} ${x.business || ""} ${x.cat} ${x.email}`.toLowerCase().includes(q.toLowerCase())
+    );
+  return (
+    <>
+      <PageHead
+        eyebrow="MEMBER NETWORK"
+        title="Members Directory"
+        sub="Connect, collaborate and grow with your Power Team members."
+        action={canRegister && <button type="button" className="btn" aria-expanded={formOpen} onClick={() => { setFormOpen(open => !open); setErr(""); }}>
+          <Icon name={formOpen ? "minus" : "plus"} size={15} stroke={2.6} /> {formOpen ? "Close form" : "Add Member"}
+        </button>}
+      />
+      {canRegister && (
+        <div className="collapse reg-collapse" data-open={formOpen}>
+          <div className="collapse-inner">
+            <form onSubmit={submit} className="card reg-form" autoComplete="off">
+              <div className="form-head"><span className="form-head-icon">♙</span><div><h3>New Account</h3><p>Add a member, Power Team Head, or Super Admin account.</p></div><span className="form-step">Registration</span></div>
+              <div className="reg-grid">
+                <div><label className="lbl" htmlFor="member-name">Full name *</label><input id="member-name" className="inp" value={f.name} onChange={set("name")} placeholder="Full name" required /></div>
+                <div><label className="lbl" htmlFor="member-email">Email *</label><input id="member-email" className="inp" type="email" value={f.email} onChange={set("email")} placeholder="name@company.com" required /></div>
+                <div><label className="lbl" htmlFor="member-business">Business name *</label><input id="member-business" className="inp" value={f.business} onChange={set("business")} placeholder="Business name" required /></div>
+                <div><label className="lbl" htmlFor="member-category">Business category *</label><input id="member-category" className="inp" value={f.cat} onChange={set("cat")} placeholder="e.g. IT Services" required /></div>
+                <div><label className="lbl" htmlFor="member-password">Temporary password *</label><input id="member-password" className="inp" type="password" value={f.pw} onChange={set("pw")} placeholder="Minimum 6 characters" autoComplete="new-password" minLength={6} required /></div>
+                <div><label className="lbl">Account type *</label>
+                  {isSA ? <Select className="inp" value={f.role} onChange={set("role")}><option value="sa">Super Admin</option><option value="th">Power Team Head</option><option value="mb">Member</option></Select> : <input className="inp" value="Member" disabled aria-label="Account type" />}
+                </div>
+                {isSA && f.role !== "sa" && <div><label className="lbl">Power team *</label>
+                  <Select className="inp" value={f.team} onChange={set("team")}><option value="">Choose a power team</option>
+                    {TEAMS.map((name, i) => (f.role !== "th" || !headOf(i + 1)) && <option key={name} value={i + 1}>{i + 1} · {name}</option>)}</Select></div>}
+              </div>
+              <div className="reg-actions">
+                <span className="reg-msg">{err && <span className="text-bni" role="alert">⚠ {err}</span>}</span>
+                <button type="button" className="btn-s" onClick={reset}>Reset</button>
+                <button type="submit" className="btn">Add Account</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      <div className="card filter-row">
+        <input
+          className="inp"
+          placeholder="Search by name, business or category..."
+          value={q}
+          onChange={(e) => Sq(e.target.value)}
+        />
+        {u.role === "sa" && (
+          <Select
+            className="inp"
+            value={team}
+            onChange={(e) => St(e.target.value)}
+          >
+            <option value="all">All Power Teams</option>
+            {TEAMS.map((t, i) => (
+              <option value={i + 1} key={t}>
+                {t}
+              </option>
+            ))}
+          </Select>
+        )}
+        <span className="filter-count">{people.length} members</span>
+      </div>
+      <div className="member-directory-grid">
+        {people.map((x) => (
+          <MemberCard x={x} key={x.id} />
+        ))}
+      </div>
+    </>
+  );
+}
+export function Profile() {
+  const db = useDB(),
+    u = me(),
+    { id: routeId } = useParams(),
+    id = Number(routeId),
+    x = db.users.find((a) => a.id === id) || u;
+  return (
+    <>
+      <PageHead
+        eyebrow="MEMBER PROFILE"
+        title={x.name}
+        sub="Professional information and Power Team activity."
+        action={
+          <Link className="btn-s" to="/members">
+            ← Back to Members
+          </Link>
+        }
+      />
+      <div className="profile-layout">
+        <section className="card profile-main">
+          <div className="profile-hero">
+            <div className="profile-avatar">{initials(x.name)}</div>
+            <div>
+              <h2>{x.name}</h2>
+              <p>{x.cat || "Business category"}</p>
+              <Pill c="g">Active Member</Pill>
+            </div>
+          </div>
+          <h3>Professional Details</h3>
+          <div className="profile-fields">
+            <div>
+              <small>Business name</small>
+              <b>{x.business || "Not provided"}</b>
+            </div>
+            <div>
+              <small>Business category</small>
+              <b>{x.cat || "Not provided"}</b>
+            </div>
+            <div>
+              <small>Email address</small>
+              <b>{x.email}</b>
+            </div>
+            <div>
+              <small>Power Team</small>
+              <b>{x.team ? TEAMS[x.team - 1] : "Association"}</b>
+            </div>
+            <div>
+              <small>Role</small>
+              <b>{x.role === "sa" ? "Super Admin" : x.role === "th" ? "Power Team Head" : "Member"}</b>
+            </div>
+          </div>
+        </section>
+        <section className="card">
+          <h3>Performance Snapshot</h3>
+          <div className="profile-stat">
+            <span>Business generated</span>
+            <b>{fm(won(x.id))}</b>
+          </div>
+          <div className="profile-stat">
+            <span>Business received</span>
+            <b>{fm(rv(x.id))}</b>
+          </div>
+          <div className="profile-stat">
+            <span>Attendance</span>
+            <b>{att(x.id) == null ? "—" : `${Math.round(att(x.id))}%`}</b>
+          </div>
+          <div className="profile-stat">
+            <span>Business goal</span>
+            <b>{fm(goalOf(x))}</b>
+          </div>
+        </section>
+      </div>
+      <div className="card mt-4">
+        <h3>Recent Activity</h3>
+        <p className="text-gray-500 text-sm mt-2">
+          Member activity and achievements will appear here as records are
+          added.
+        </p>
+      </div>
+    </>
+  );
+}
+export function OneToOnes() {
+  const db = useDB(),
+    u = me(),
+    [to, St] = useState(""),
+    [msg, Sm] = useState("");
+  const people = scopeUsers(db, u).filter((x) => x.id !== u.id),
+    list = db.ones.filter(
+      (o) =>
+        u.role === "sa" || U(o.f)?.team === u.team || U(o.to)?.team === u.team
+    );
+  const add = () => {
+    if (!to) return Sm("Select a member first.");
+    addOne(u.id, +to);
+    St("");
+    Sm("1-to-1 recorded.");
+  };
+  return (
+    <>
+      <PageHead
+        eyebrow="MEMBER CONNECTIONS"
+        title="1-to-1 Meetings"
+        sub="Build stronger relationships through individual member meetings."
+      />
+      {u.role !== "mb" && (
+        <div className="card form-inline">
+          <Select
+            className="inp"
+            value={to}
+            onChange={(e) => St(e.target.value)}
+          >
+            <option value="">Select member</option>
+            {people.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </Select>
+          <button className="btn" onClick={add}>
+            <Icon name="plus" size={15} stroke={2.6} /> Record 1-to-1
+          </button>
+          {msg && <span className="text-sm text-green-700">{msg}</span>}
+        </div>
+      )}
+      <Tiles
+        items={[
+          ["Total 1-to-1s", list.length],
+          [
+            "Your 1-to-1s",
+            list.filter((x) => x.f === u.id || x.to === u.id).length,
+          ],
+          ["Team members", people.length],
+        ]}
+      />
+      <div className="mt-4">
+        <Table
+          head={["Date", "Initiated by", "Meeting with", "Activity"]}
+          rows={list.map((o, i) => (
+            <tr key={i}>
+              <td className="td">{o.d}</td>
+              <td className="td">{U(o.f)?.name}</td>
+              <td className="td">{U(o.to)?.name}</td>
+              <td className="td">
+                <Pill c="g">Completed</Pill>
+              </td>
+            </tr>
+          ))}
+        />
+      </div>
+    </>
+  );
+}
+export function Business() {
+  const db = useDB(),
+    u = me(),
+    list = db.notes.filter(
+      (n) =>
+        n.st === 2 &&
+        (u.role === "sa" || U(n.g)?.team === u.team || U(n.to)?.team === u.team)
+    );
+  return (
+    <>
+      <PageHead
+        eyebrow="BUSINESS TRACKING"
+        title="Business Generated"
+        sub="Monitor confirmed business and contribution across the Power Team."
+      />
+      <Tiles
+        items={[
+          ["Confirmed records", list.length],
+          ["Business value", fm(list.reduce((a, n) => a + n.v, 0))],
+          ["Members contributing", new Set(list.map((n) => n.g)).size],
+        ]}
+      />
+      <div className="mt-4">
+        <Table
+          head={[
+            "Date",
+            "Business generated by",
+            "Referral credited to",
+            "Business details",
+            "Value",
+          ]}
+          rows={list.map((n, i) => (
+            <tr key={i}>
+              <td className="td">{n.d}</td>
+              <td className="td">{U(n.g)?.name}</td>
+              <td className="td">{U(n.to)?.name}</td>
+              <td className="td">{n.det}</td>
+              <td className="td font-semibold">{fm(n.v)}</td>
+            </tr>
+          ))}
+        />
+      </div>
+    </>
+  );
+}
+export function Reports() {
+  const db = useDB(),
+    u = me(),
+    people = scopeUsers(db, u),
+    ids = people.map((p) => p.id);
+  const refs = db.refs.filter((r) => ids.includes(r.f)),
+    jc = db.acts.filter((a) => a.t === "Joint call" && ids.includes(a.f)),
+    ones = db.ones.filter((o) => ids.includes(o.f));
+  const row = (p) => [
+    refs.filter((r) => r.f === p.id).length,
+    jc.filter((a) => a.f === p.id).length,
+    ones.filter((o) => o.f === p.id).length,
+  ];
+  const pts = db.meets.map((m) => {
+    const rec = ids.filter((i) => i in m.s);
+    return {
+      l: m.d.split("-").slice(0, 2).join(" "),
+      v: rec.length
+        ? Math.round(
+            (rec.filter((i) => m.s[i] === "P").length / rec.length) * 100
+          )
+        : 0,
+    };
+  });
+  return (
+    <>
+      <PageHead
+        eyebrow="INSIGHTS & ANALYTICS"
+        title="Reports"
+        sub="Member engagement, referrals and business outcomes at a glance."
+      />
+      <Tiles
+        items={[
+          ["Members", people.length],
+          ["Referrals", refs.length],
+          ["Joint calls", jc.length],
+          ["1-to-1s", ones.length],
+          [
+            "Business won",
+            fm(
+              db.notes
+                .filter(
+                  (n) => n.st === 2 && (ids.includes(n.g) || ids.includes(n.to))
+                )
+                .reduce((a, n) => a + n.v, 0)
+            ),
+          ],
+        ]}
+      />
+      <div className="chart-grid c21 mt-4">
+        <Columns
+          title="Participation by member"
+          series={["Referrals", "Joint calls", "1-to-1s"]}
+          groups={people.map((p) => ({ l: p.name.split(" ")[0], v: row(p) }))}
+        />
+        <Donut
+          title="Activity mix"
+          data={[
+            { l: "Referrals", v: refs.length },
+            { l: "Joint calls", v: jc.length },
+            { l: "1-to-1s", v: ones.length },
+          ]}
+        />
+      </div>
+      <Line
+        title="Attendance by meeting"
+        hint="% present"
+        points={pts}
+        fmt={(v) => `${v}%`}
+        max={100}
+      />
+    </>
+  );
+}
+export function Settings() {
+  const u = me();
+  return (
+    <>
+      <PageHead
+        eyebrow="PREFERENCES"
+        title="Settings"
+        sub="Account details and portal preferences."
+      />
+      <div className="card max-w-2xl">
+        <h3 className="font-semibold mb-4">My Account</h3>
+        <div className="profile-fields">
+          <div>
+            <small>Name</small>
+            <b>{u.name}</b>
+          </div>
+          <div>
+            <small>Email</small>
+            <b>{u.email}</b>
+          </div>
+          <div>
+            <small>Role</small>
+            <b>
+              {u.role === "sa"
+                ? "Super Admin"
+                : u.role === "th"
+                ? "Power Team Head"
+                : "Member"}
+            </b>
+          </div>
+          <div>
+            <small>Power Team</small>
+            <b>{u.team ? TEAMS[u.team - 1] : "Association-wide"}</b>
+          </div>
+        </div>
+        <p className="text-xs text-gray-500 mt-5">
+          This prototype stores demo account information in this browser.
+          Production account security and password management must be connected
+          to a secure backend.
+        </p>
+      </div>
+    </>
+  );
+}

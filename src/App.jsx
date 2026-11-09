@@ -23,8 +23,8 @@ const ROLE = { sa: 'Super Admin', th: 'Power Team Head', mb: 'Member' }
 const NAV = [
   { group: 'MAIN MENU', items: [
     { to: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
-    { to: '/members', icon: 'users', label: 'Members' },
     { to: '/teams', icon: 'network', label: 'Power Teams' },
+    { to: '/members', icon: 'users', label: 'Members' },
     { to: '/goals', icon: 'target', label: 'Member Goals' },
     { to: '/notes', icon: 'heart', label: 'Thank-you Notes' },
   ] },
@@ -74,13 +74,13 @@ function Shell({ u }) {
     <Palette open={pal} onClose={() => setPal(false)} nav={nav} />
     <main className="workspace"><Routes>
       <Route path="/joint-calls" element={<Activity key="jc" only="Joint call"/>}/>
-      <Route path="/dashboard" element={<Dashboard/>}/><Route path="/members" element={<Members/>}/><Route path="/members/:id" element={<Profile/>}/><Route path="/teams" element={<Teams/>}/>
+      <Route path="/dashboard" element={<Dashboard/>}/><Route path="/members" element={<Members/>}/><Route path="/members/:id" element={<Profile/>}/><Route path="/teams" element={<Teams/>}/><Route path="/teams/:teamId" element={<Teams/>}/>
       <Route path="/goals" element={<Goals/>}/><Route path="/opportunities" element={<Opportunities/>}/><Route path="/connects" element={<Connects/>}/><Route path="/referrals" element={<Referrals/>}/>
       <Route path="/one-to-ones" element={<OneToOnes/>}/><Route path="/activity" element={<Activity key="all"/>}/><Route path="/attendance" element={<Attendance/>}/><Route path="/minutes" element={<Minutes/>}/>
       <Route path="/business" element={<Business/>}/><Route path="/performance" element={<Performance/>}/><Route path="/reports" element={<Reports/>}/><Route path="/settings" element={<Settings/>}/><Route path="/notes" element={<Notes/>}/>
       <Route path="/clients" element={<Navigate to="/opportunities" replace/>}/><Route path="/meetings" element={<Navigate to="/attendance" replace/>}/>
       <Route path="*" element={<Navigate to="/dashboard" replace/>}/>
-    </Routes></main>
+    </Routes><footer className="app-credit">Designed and developed by <a href="https://digiworldsoftwaresolutions.com/" target="_blank" rel="noreferrer">Digiworld</a></footer></main>
   </div>
 }
 export default function App() { useDB(); const u = me(); return <><HashRouter>{u ? <Shell u={u}/> : <Login/>}</HashRouter><Toaster/></> }
