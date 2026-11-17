@@ -1,6 +1,6 @@
-# BNI Power Team Hub – Redesigned
+# Knights Power Team Hub
 
-A React + Vite prototype using the BNI red, white and grey visual identity. The redesign includes a dedicated sign-in screen and separate modules for Dashboard, Members Directory, Member Profile, Power Teams, Member Goals, Opportunities (meeting updates: clients, pipeline and specific asks), Specific Connects, Referrals (date, contact person, phone, email, requirement), 1-to-1 Meetings, Activity Tracker, Attendance, Minutes of Meeting, Business Generated, Performance, Reports, Settings and Thank-you Notes.
+A React + Vite prototype for the Knights Power Team Hub. It includes a dedicated sign-in screen and modules for Dashboard, Members Directory, Friday Updates, Member Profile, Power Teams, Member Goals, Opportunities (meeting updates: clients, pipeline and specific asks), Activity Tracker (1-to-1s, thank-you notes, joint calls, specific connects and referrals), Attendance, Minutes of Meeting, Business Generated, Top Clients (Super Admin only), Performance, Reports and Settings. Tracker categories are accessed from Activity Tracker rather than separate sidebar links; relevant entry and detail actions remain available there.
 
 The Excel tracker's sheets map to pages: Member Goals → Goals, Meeting Updates → Opportunities, Specific Connect Tracker → Specific Connects, Power Team Activity → Activity Tracker, Performance Dashboard → Performance, Attendance → Attendance, MOM → Minutes of Meeting.
 
@@ -16,7 +16,7 @@ npm run dev
 | Role | Email | Password |
 |---|---|---|
 | Super Admin | admin@bni.demo | demo123 |
-| Team Head | head@bni.demo | demo123 |
+| Team Head Coordinator | head@bni.demo | demo123 |
 | Member | member@bni.demo | demo123 |
 
 Use **Reset demo data** on the login screen to restore sample data.
@@ -29,9 +29,9 @@ This prototype stores demo records in browser localStorage and the current login
 
 | Role | Registers | Sees | Can change |
 |---|---|---|---|
-| Super Admin | Team Heads | All 12 teams and everyone | Everything |
-| Team Head | Members of own team | Own team only | Own team's records |
-| Member | – | Same pages as the Team Head, own team only, read-only | Only Referrals and Joint Calls (their own entries) |
+| Super Admin | Team Head Coordinators | All teams and everyone, including Top Clients | Everything |
+| Team Head Coordinator | Members of own team | Own team only | Own team's records and meeting schedule |
+| Member | – | Own team only | Own Friday updates and Specific Connects; referrals and joint calls |
 
 Fonts: Inter.
 

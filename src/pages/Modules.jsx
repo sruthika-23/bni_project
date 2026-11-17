@@ -1,7 +1,7 @@
 import Icon from "../icons";
 import Select from "../Select";
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import {
   useDB,
   me,
@@ -22,8 +22,9 @@ import {
   register,
 } from "../store";
 import { Table, Pill, Tiles } from "../ui";
-import { Columns, Donut, Line } from "../charts";
+import { Columns, Donut, HBar } from "../charts";
 import { toastOk } from "../toast";
+import { GoalsContent } from "./Goals";
 
 const initials = (n) =>
   n
@@ -38,13 +39,12 @@ const scopeUsers = (db, u) =>
     : u.role === "th"
     ? teamUsers(u.team)
     : teamUsers(u.team);
-function PageHead({ eyebrow, title, sub, action }) {
+function PageHead({ eyebrow, title, action }) {
   return (
     <div className="module-head">
       <div>
         <div className="eyebrow">{eyebrow}</div>
         <h1>{title}</h1>
-        <p>{sub}</p>
       </div>
       {action}
     </div>
@@ -73,6 +73,7 @@ function MemberCard({ x }) {
 export function Members() {
   const db = useDB(),
     u = me(),
+    [searchParams, setSearchParams] = useSearchParams(),
     [q, Sq] = useState(""),
     [team, St] = useState("all"),
     [formOpen, setFormOpen] = useState(false),
@@ -102,21 +103,65 @@ export function Members() {
         (team === "all" || x.team === +team) &&
         `${x.name} ${x.business || ""} ${x.cat} ${x.email}`.toLowerCase().includes(q.toLowerCase())
     );
+  const activeTab = searchParams.get("tab") || "members";
+  const showGoals = activeTab === "goals";
+  if (activeTab === "network" || activeTab === "friday") return <Navigate to="/business-network" replace />;
+  const setTab = (nextTab) => {
+    if (nextTab !== "members") setSearchParams({ tab: nextTab });
+    else setSearchParams({});
+  };
   return (
     <>
-      <PageHead
-        eyebrow="MEMBER NETWORK"
-        title="Members Directory"
-        sub="Connect, collaborate and grow with your Power Team members."
-        action={canRegister && <button type="button" className="btn" aria-expanded={formOpen} onClick={() => { setFormOpen(open => !open); setErr(""); }}>
-          <Icon name={formOpen ? "minus" : "plus"} size={15} stroke={2.6} /> {formOpen ? "Close form" : "Add Member"}
-        </button>}
-      />
-      {canRegister && (
-        <div className="collapse reg-collapse" data-open={formOpen}>
+    <PageHead
+      eyebrow={showGoals ? "TARGETS" : "MEMBER DIRECTORY"}
+      title={showGoals ? "Member Goals" : "Members Directory"}
+      action={!showGoals && canRegister && <button type="button" className="btn" aria-expanded={formOpen} onClick={() => { setFormOpen(open => !open); setErr(""); }}>
+        <Icon name={formOpen ? "minus" : "plus"} size={15} stroke={2.6} /> {formOpen ? "Close form" : "Add Member"}
+      </button>}
+    />
+    <div className="member-tabs" role="tablist" aria-label="Member pages">
+      <button
+        type="button"
+        id="members-tab"
+        role="tab"
+        aria-selected={activeTab === "members"}
+        aria-controls="members-panel"
+        className={`member-tab ${activeTab === "members" ? "active" : ""}`}
+        onClick={() => setTab("members")}
+      >
+        Members
+      </button>
+      <button
+        type="button"
+        id="member-goals-tab"
+        role="tab"
+        aria-selected={showGoals}
+        aria-controls="member-goals-panel"
+        className={`member-tab ${showGoals ? "active" : ""}`}
+        onClick={() => setTab("goals")}
+      >
+        Member Goals
+      </button>
+    </div>
+    <div
+      id="member-goals-panel"
+      role="tabpanel"
+      aria-labelledby="member-goals-tab"
+      hidden={!showGoals}
+    >
+      <GoalsContent />
+    </div>
+    <div
+      id="members-panel"
+      role="tabpanel"
+      aria-labelledby="members-tab"
+      hidden={activeTab !== "members"}
+    >
+    {canRegister && (
+      <div className="collapse reg-collapse" data-open={formOpen}>
           <div className="collapse-inner">
             <form onSubmit={submit} className="card reg-form" autoComplete="off">
-              <div className="form-head"><span className="form-head-icon">♙</span><div><h3>New Account</h3><p>Add a member, Power Team Head, or Super Admin account.</p></div><span className="form-step">Registration</span></div>
+              <div className="form-head"><span className="form-head-icon">♙</span><div><h3>New Account</h3><p>Add a member, Team Head Coordinator, or Super Admin account.</p></div><span className="form-step">Registration</span></div>
               <div className="reg-grid">
                 <div><label className="lbl" htmlFor="member-name">Full name *</label><input id="member-name" className="inp" value={f.name} onChange={set("name")} placeholder="Full name" required /></div>
                 <div><label className="lbl" htmlFor="member-email">Email *</label><input id="member-email" className="inp" type="email" value={f.email} onChange={set("email")} placeholder="name@company.com" required /></div>
@@ -124,7 +169,7 @@ export function Members() {
                 <div><label className="lbl" htmlFor="member-category">Business category *</label><input id="member-category" className="inp" value={f.cat} onChange={set("cat")} placeholder="e.g. IT Services" required /></div>
                 <div><label className="lbl" htmlFor="member-password">Temporary password *</label><input id="member-password" className="inp" type="password" value={f.pw} onChange={set("pw")} placeholder="Minimum 6 characters" autoComplete="new-password" minLength={6} required /></div>
                 <div><label className="lbl">Account type *</label>
-                  {isSA ? <Select className="inp" value={f.role} onChange={set("role")}><option value="sa">Super Admin</option><option value="th">Power Team Head</option><option value="mb">Member</option></Select> : <input className="inp" value="Member" disabled aria-label="Account type" />}
+                  {isSA ? <Select className="inp" value={f.role} onChange={set("role")}><option value="sa">Super Admin</option><option value="th">Team Head Coordinator</option><option value="mb">Member</option></Select> : <input className="inp" value="Member" disabled aria-label="Account type" />}
                 </div>
                 {isSA && f.role !== "sa" && <div><label className="lbl">Power team *</label>
                   <Select className="inp" value={f.team} onChange={set("team")}><option value="">Choose a power team</option>
@@ -167,6 +212,7 @@ export function Members() {
           <MemberCard x={x} key={x.id} />
         ))}
       </div>
+    </div>
     </>
   );
 }
@@ -218,7 +264,7 @@ export function Profile() {
             </div>
             <div>
               <small>Role</small>
-              <b>{x.role === "sa" ? "Super Admin" : x.role === "th" ? "Power Team Head" : "Member"}</b>
+              <b>{x.role === "sa" ? "Super Admin" : x.role === "th" ? "Team Head Coordinator" : "Member"}</b>
             </div>
           </div>
         </section>
@@ -375,29 +421,34 @@ export function Reports() {
     ids = people.map((p) => p.id);
   const refs = db.refs.filter((r) => ids.includes(r.f)),
     jc = db.acts.filter((a) => a.t === "Joint call" && ids.includes(a.f)),
-    ones = db.ones.filter((o) => ids.includes(o.f));
+    ones = db.ones.filter((o) => ids.includes(o.f)),
+    notes = db.notes.filter((n) => ids.includes(n.g) || ids.includes(n.to));
   const row = (p) => [
     refs.filter((r) => r.f === p.id).length,
     jc.filter((a) => a.f === p.id).length,
     ones.filter((o) => o.f === p.id).length,
   ];
-  const pts = db.meets.map((m) => {
-    const rec = ids.filter((i) => i in m.s);
-    return {
-      l: m.d.split("-").slice(0, 2).join(" "),
-      v: rec.length
-        ? Math.round(
-            (rec.filter((i) => m.s[i] === "P").length / rec.length) * 100
-          )
-        : 0,
-    };
-  });
+  const businessByMember = people
+    .map((p) => ({ l: p.name, v: won(p.id) }))
+    .filter((record) => record.v > 0)
+    .sort((a, b) => b.v - a.v)
+    .slice(0, 5);
+  const noteOutcomes = [
+    { l: "Converted to business", v: notes.filter((n) => n.st === 2).length },
+    { l: "Value confirmed", v: notes.filter((n) => n.st === 1).length },
+    { l: "Thanked", v: notes.filter((n) => n.st === 0).length },
+  ];
   return (
     <>
       <PageHead
         eyebrow="INSIGHTS & ANALYTICS"
         title="Reports"
         sub="Member engagement, referrals and business outcomes at a glance."
+        action={
+          <Link className="btn" to="/overall-report">
+            <Icon name="file" size={15} /> Overall Report
+          </Link>
+        }
       />
       <Tiles
         items={[
@@ -407,13 +458,7 @@ export function Reports() {
           ["1-to-1s", ones.length],
           [
             "Business won",
-            fm(
-              db.notes
-                .filter(
-                  (n) => n.st === 2 && (ids.includes(n.g) || ids.includes(n.to))
-                )
-                .reduce((a, n) => a + n.v, 0)
-            ),
+            fm(notes.filter((n) => n.st === 2).reduce((a, n) => a + n.v, 0)),
           ],
         ]}
       />
@@ -432,13 +477,14 @@ export function Reports() {
           ]}
         />
       </div>
-      <Line
-        title="Attendance by meeting"
-        hint="% present"
-        points={pts}
-        fmt={(v) => `${v}%`}
-        max={100}
-      />
+      <div className="chart-grid c2">
+        <HBar
+          title="Top business won by member"
+          data={businessByMember}
+          fmt={fm}
+        />
+        <Donut title="Thank-you note outcomes" data={noteOutcomes} />
+      </div>
     </>
   );
 }
@@ -468,7 +514,7 @@ export function Settings() {
               {u.role === "sa"
                 ? "Super Admin"
                 : u.role === "th"
-                ? "Power Team Head"
+                ? "Team Head Coordinator"
                 : "Member"}
             </b>
           </div>

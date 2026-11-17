@@ -18,18 +18,44 @@ function useOutside(open, close) {
 /* ---------- Command palette (Ctrl/Cmd + K) ---------- */
 export function Palette({ open, onClose, nav }) {
   const db = useDB(), u = me(), go = useNavigate()
-  const [q, setQ] = useState(''), [hi, setHi] = useState(0)
+  const [q, setQ] = useState(''), [hi, setHi] = useState(0), [view, setView] = useState('modules')
   const inp = useRef(null), list = useRef(null)
-  useEffect(() => { if (open) { setQ(''); setHi(0); setTimeout(() => inp.current?.focus(), 30) } }, [open])
+  useEffect(() => { if (open) { setQ(''); setHi(0); setView('modules'); setTimeout(() => inp.current?.focus(), 30) } }, [open])
   const s = q.trim().toLowerCase(), has = x => !s || x.toLowerCase().includes(s)
-  const pages = nav.flatMap(g => g.items).filter(n => has(n.label)).map(n => ({ g: 'Pages', icon: n.icon, t: n.label, sub: 'Go to page', to: n.to }))
-  const people = scope(u).filter(p => has(`${p.name} ${p.cat || ''}`)).slice(0, s ? 6 : 4)
-    .map(p => ({ g: 'Members', icon: 'user', t: p.name, sub: `${p.cat || 'Member'} · ${TEAMS[p.team - 1] || ''}`, to: `/members/${p.id}` }))
-  const teams = u.role === 'sa' ? TEAMS.map((n, i) => ({ n, i })).filter(x => s && has(x.n)).slice(0, 4).map(x => ({ g: 'Power Teams', icon: 'network', t: x.n, sub: `Team ${x.i + 1}`, to: '/teams' })) : []
-  const refs = s ? db.refs.filter(r => (u.role === 'sa' || U(r.f)?.team === u.team || U(r.to)?.team === u.team) && has(`${r.co} ${r.cn || ''}`)).slice(0, 4)
-    .map(r => ({ g: 'Referrals', icon: 'swap', t: r.co, sub: `${U(r.f)?.name} → ${U(r.to)?.name}`, to: '/referrals' })) : []
-  const items = [...(s ? [...people, ...teams, ...refs, ...pages] : [...pages.slice(0, 6), ...people])]
-  useEffect(() => { setHi(0) }, [q])
+  const pages = nav.map(group => ({
+    g: group.group,
+    entries: group.items.filter(item => has(item.label)).map(item => ({ g: group.group, icon: item.icon, t: item.label, sub: 'Open module', to: item.to })),
+  })).filter(group => group.entries.length)
+  const people = s ? scope(u).filter(person => has(`${person.name} ${person.cat || ''} ${person.business || ''}`)).slice(0, 6)
+    .map(person => ({ g: 'Members', icon: 'user', t: person.name, sub: `${person.cat || 'Member'} · ${TEAMS[person.team - 1] || ''}`, to: `/members/${person.id}` })) : []
+  const teams = u.role === 'sa' && s ? TEAMS.map((name, index) => ({ name, index })).filter(team => has(team.name)).slice(0, 4)
+    .map(team => ({ g: 'Power Teams', icon: 'network', t: team.name, sub: `Team ${team.index + 1}`, to: '/teams' })) : []
+
+  const companyMap = new Map()
+  const addCompany = (name, source, member, to) => {
+    const label = (name || '').trim()
+    if (!label || !s || !has(label)) return
+    const key = label.toLowerCase()
+    const entry = companyMap.get(key) || { g: 'Companies', icon: 'search', t: label, sources: [], members: [], to }
+    if (!entry.sources.includes(source)) entry.sources.push(source)
+    if (member && !entry.members.includes(member)) entry.members.push(member)
+    companyMap.set(key, entry)
+  }
+  db.notes.filter(note => note.st === 2 && (u.role === 'sa' || U(note.g)?.team === u.team || U(note.to)?.team === u.team))
+    .forEach(note => addCompany(note.det, 'Business generated', U(note.to)?.name || U(note.g)?.name, '/business'))
+  db.refs.filter(ref => u.role === 'sa' || U(ref.f)?.team === u.team || U(ref.to)?.team === u.team)
+    .forEach(ref => addCompany(ref.co, 'Referrals', U(ref.f)?.name, '/referrals'))
+  db.connects.filter(connect => u.role === 'sa' || U(connect.f)?.team === u.team)
+    .forEach(connect => addCompany(connect.t, 'Specific connects', U(connect.f)?.name, `/connects?q=${encodeURIComponent(connect.t)}`))
+  db.opps.filter(opportunity => u.role === 'sa' || U(opportunity.m)?.team === u.team)
+    .forEach(opportunity => addCompany(opportunity.cl, 'Opportunities', U(opportunity.m)?.name, '/opportunities'))
+  const companies = [...companyMap.values()].map(company => ({
+    ...company,
+    sub: [...company.sources, ...company.members].join(' · '),
+  })).sort((a, b) => a.t.localeCompare(b.t))
+  const moduleItems = [...(s ? pages.flatMap(group => group.entries) : pages.flatMap(group => group.entries).slice(0, 6)), ...people, ...teams]
+  const items = view === 'companies' ? companies : moduleItems
+  useEffect(() => { setHi(0) }, [q, view])
   useEffect(() => { list.current?.querySelector(`[data-i="${hi}"]`)?.scrollIntoView({ block: 'nearest' }) }, [hi])
   if (!open) return null
   const pick = it => { if (it) { onClose(); go(it.to) } }
@@ -42,7 +68,11 @@ export function Palette({ open, onClose, nav }) {
   let last = ''
   return <div className="pal-scrim" onMouseDown={onClose}>
     <div className="pal" role="dialog" aria-label="Search" onMouseDown={e => e.stopPropagation()} onKeyDown={key}>
-      <div className="pal-input"><Icon name="search" size={19} /><input ref={inp} value={q} onChange={e => setQ(e.target.value)} placeholder="Search members, teams, referrals or pages…" /><kbd>Esc</kbd></div>
+      <div className="pal-input"><Icon name="search" size={19} /><input ref={inp} value={q} onChange={e => setQ(e.target.value)} placeholder={view === 'companies' ? 'Search companies…' : 'Search modules, members or teams…'} /><kbd>Esc</kbd></div>
+      <div className="pal-tabs" role="tablist" aria-label="Search categories">
+        <button type="button" role="tab" aria-selected={view === 'modules'} className={view === 'modules' ? 'active' : ''} onClick={() => setView('modules')}>Modules</button>
+        <button type="button" role="tab" aria-selected={view === 'companies'} className={view === 'companies' ? 'active' : ''} onClick={() => setView('companies')}>Companies</button>
+      </div>
       <div className="pal-list" ref={list}>
         {items.length ? items.map((it, i) => {
           const head = it.g !== last; last = it.g
@@ -53,7 +83,7 @@ export function Palette({ open, onClose, nav }) {
               <span className="pal-txt"><b>{it.t}</b><small>{it.sub}</small></span>
               {i === hi && <Icon name="enter" size={15} className="pal-enter" />}
             </div></div>
-        }) : <div className="pal-empty"><Icon name="search" size={26} /><b>No results for “{q}”</b><span>Try a member name, company or page.</span></div>}
+        }) : <div className="pal-empty"><Icon name="search" size={26} /><b>{view === 'companies' && !s ? 'Search company records' : `No results for “${q}”`}</b><span>{view === 'companies' ? 'Company names from business, referral, connect and opportunity records appear here.' : 'Try a module, member name or Power Team.'}</span></div>}
       </div>
       <div className="pal-foot"><span><kbd>↑</kbd><kbd>↓</kbd> navigate</span><span><kbd>↵</kbd> open</span><span><kbd>Esc</kbd> close</span></div>
     </div>

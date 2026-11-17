@@ -2,7 +2,7 @@
 // Column alignment in the exported PDF was lost, so some cells may sit in a neighbouring column – edit in the app.
 export function seedExtras(id) {
   let k = 0, j = 0
-  const A = '14-Oct-2026', B = '28-Oct-2026'
+  const A = '14-Oct-2026', B = '28-Oct-2026', C = '14-Nov-2026'
   const o = (d, m, cl = '', pr = '', pp = '', ask = '', ow = null) => ({ id: ++k, d, m: id(m), cl, pr, pp, ask, ow: ow ? id(ow) : null })
   const c = (d, m, t, ow = null, cp = '') => ({ id: ++j, d, f: id(m), t, cp, ask: '', ow: ow ? id(ow) : null, st: 'Requested', intro: '', won: 0 })
   const opps = [
@@ -40,6 +40,11 @@ export function seedExtras(id) {
     o(B, 'Ramya', '', '', '', 'SPIC', 'Sampath'),
     o(B, 'Ramya', '', '', '', 'Touch n Feel Pvt Ltd', 'Abhay'),
     o(B, 'Sivaganesh', '', '', 'Bharath Forge Ltd, Uno Minda Ltd, SCL', 'Yamaha Motors; KH Exports; Motherson Ltd'),
+    o(C, 'Shivshankar', 'Sosaley Technologies Pvt Ltd; Podium Signals Systems Pvt Ltd; PVL Networks; Next Wire Harness Technologies; DS Connector and Cables India Pvt Ltd', '', 'Visual Media Systems Pvt Ltd; Sri Sai Control Automation', 'Yazaki Wire Harness', 'Krishna'),
+    o(C, 'Krishna', 'Nutech Win Parts - Gerugambakkam, Vallam; MAK Control Systems; D-Propells Aerospace', '', 'Wika Instruments India Pvt Ltd (Ambattur); JCBL Marrel Tippers Pvt Ltd; Sri Ganesh Automations; Decimal Engineering; Shree Chakra Engineers; Wheels India Ltd (SPR)', 'NSK Bearings'),
+    o(C, 'Abhay', 'Maneka Electricals; Tamilnadu Steel Tubes; VVV Engineering; Mani Tools & Tackles; Pioneer Wincon; Cube Cinemas', '', 'Bharathi Solar; DY Auto India Pvt Ltd', 'Hutson Agro; Robotics Manufacturers'),
+    o(C, 'Sivaganesh', 'TVS Motors - Mysore', '', 'Apollo Tyres', 'Isuzu Motors, Sricity; Bluestar India Ltd'),
+    o(C, 'Sakthivel', 'Sealand Maritime (Dubai); Loveme Internationals (Malaysia); Loveall Sports (Malaysia); Ganesh Timbers', '', 'ARK Engineering Pvt Ltd (Bangalore); Global Industrial Pvt Ltd (Bangalore); Sabyasachi (Designers)', 'Titan Industries; Emerald Wires & Switches (Coimbatore); Kiran James (Surat)'),
   ]
   const connects = [
     c(A, 'Abhay', 'Daikin Aircondition Ltd'), c(A, 'Abhay', 'Hutson Agro'), c(A, 'Abhay', 'Kone elevators'),
@@ -54,6 +59,11 @@ export function seedExtras(id) {
     c(B, 'Krishna', 'Momentiv Performance Materials India P Ltd'), c(B, 'Krishna', 'Super Auto Forge'), c(B, 'Krishna', 'BSA Corporation'), c(B, 'Krishna', 'Precision Bright Steel Industries'),
     c(B, 'Ramya', 'Tapco EPC'), c(B, 'Ramya', 'KEPL MEP'), c(B, 'Ramya', 'Power Tech Substations'), c(B, 'Ramya', 'SPIC', 'Sampath'), c(B, 'Ramya', 'Touch n Feel Pvt Ltd', 'Abhay'),
     c(B, 'Sivaganesh', 'Yamaha Motors'), c(B, 'Sivaganesh', 'KH Exports'), c(B, 'Sivaganesh', 'Motherson Ltd'),
+    c(C, 'Shivshankar', 'Yazaki Wire Harness', 'Krishna'),
+    c(C, 'Krishna', 'Wheels India Ltd, Tada', 'Sivaganesh'), c(C, 'Krishna', 'NSK Bearings'),
+    c(C, 'Abhay', 'Hutson Agro'), c(C, 'Abhay', 'Robotics Manufacturers'),
+    c(C, 'Sivaganesh', 'Isuzu Motors, Sricity'), c(C, 'Sivaganesh', 'Bluestar India Ltd'),
+    c(C, 'Sakthivel', 'Titan Industries'), c(C, 'Sakthivel', 'Emerald Wires & Switches (Coimbatore)'), c(C, 'Sakthivel', 'Kiran James (Surat)'),
   ]
   const moms = [{
     no: 2, team: 1, d: B, t: '08:30', venue: 'EEE office', captain: '', by: 'Sivaganesh Dorairaj',

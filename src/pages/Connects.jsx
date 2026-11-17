@@ -2,6 +2,7 @@ import Icon from '../icons'
 import { toastOk } from '../toast'
 import Select from '../Select'
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useDB, me, U, scope, addConnect, updConnect, fmtD, isoToday, dv, fm, canManage } from '../store'
 import { PageHead, Tiles, Table, Pill } from '../ui'
 
@@ -12,7 +13,8 @@ const nowD = () => fmtD(isoToday())
 
 export default function Connects() {
   const db = useDB(), u = me(), people = scope(u)
-  const [f, setF] = useState(() => blank(u)), [q, Sq] = useState(''), [st, Ss] = useState('all'), [err, setErr] = useState(''), [ok, setOk] = useState('')
+  const [searchParams] = useSearchParams()
+  const [f, setF] = useState(() => blank(u)), [q, Sq] = useState(() => searchParams.get('q') || ''), [st, Ss] = useState('all'), [err, setErr] = useState(''), [ok, setOk] = useState('')
   const set = k => e => { setF({ ...f, [k]: e.target.value }); setOk('') }
   const all = db.connects.filter(c => u.role === 'sa' || U(c.f)?.team === u.team)
   const list = all.filter(c => (st === 'all' || c.st === st) && [c.t, c.cp, c.ask, U(c.f)?.name, U(c.ow)?.name].join(' ').toLowerCase().includes(q.toLowerCase()))
@@ -23,14 +25,15 @@ export default function Connects() {
     const m = u.role === 'mb' ? u.id : +f.f
     if (!m) return setErr('Choose the requesting member.')
     if (!f.t.trim()) return setErr('Enter the target company / industry.')
-    addConnect({ d: fmtD(f.d), f: m, t: f.t.trim(), cp: f.cp.trim(), ask: f.ask.trim(), ow: f.ow ? +f.ow : null })
+    const result = addConnect({ d: fmtD(f.d), f: m, t: f.t.trim(), cp: f.cp.trim(), ask: f.ask.trim(), ow: f.ow ? +f.ow : null })
+    if (result) return setErr(result)
     setF(blank(u)); setErr(''); setOk(toastOk('Connect request added.'))
   }
   const setStatus = (c, s) => updConnect(c, { st: s, intro: s !== 'Requested' && !c.intro ? nowD() : s === 'Requested' ? '' : c.intro })
   return <>
     <PageHead eyebrow="REFERRAL REQUESTS" title="Specific Connects" sub="Track every connection a member has asked the Power Team to help with." />
     <Tiles items={[['Total requests', all.length], ['Requested', all.filter(c => c.st === 'Requested').length], ['Introduced / in talks', all.filter(c => c.st === 'Introduced' || c.st === 'In discussion').length], ['Won', all.filter(c => c.st === 'Won').length], ['Without owner', all.filter(c => !c.ow).length], ['Business won', fm(all.reduce((a, c) => a + (+c.won || 0), 0))]]} />
-    {u.role !== 'mb' && <form className="card mt-4" onSubmit={submit}>
+    <form className="card mt-4" onSubmit={submit}>
       <h3 className="font-semibold mb-3">Add a connect request</h3>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <div><label className="lbl">Date requested *</label><input className="inp" type="date" value={f.d} onChange={set('d')} /></div>
@@ -41,7 +44,7 @@ export default function Connects() {
         <div><label className="lbl">Connect owner (helping member)</label><Select className="inp" value={f.ow} onChange={set('ow')}><option value="">Not assigned</option>{people.filter(p => p.id !== (u.role === 'mb' ? u.id : +f.f)).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></div>
       </div>
       <div className="flex items-center gap-3 mt-4"><button className="btn"><Icon name="plus" size={15} stroke={2.6} /> Add request</button>{err && <span className="text-sm text-bni">{err}</span>}{ok && <span className="text-sm text-green-700">{ok}</span>}</div>
-    </form>}
+    </form>
     <div className="card filter-row mt-4"><input className="inp" placeholder="Search target, contact or member..." value={q} onChange={e => Sq(e.target.value)} />
       <Select className="inp" value={st} onChange={e => Ss(e.target.value)}><option value="all">All statuses</option>{CS.map(s => <option key={s}>{s}</option>)}</Select><span className="filter-count">{list.length} requests</span></div>
     <Table head={['Date requested', 'Requesting member', 'Target company / industry', 'Contact person / designation', 'Specific connection / ask', 'Connect owner', 'Status', 'Intro date', 'Business won (₹)']} rows={list.map(c => {

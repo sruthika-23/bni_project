@@ -2,7 +2,7 @@ import { useState } from "react";
 import { login, resetDemo } from "../store";
 const DEMO = [
   ["Super Admin", "admin"],
-  ["Team Head", "head"],
+  ["Power Team Coordinator", "head"],
   ["Member", "member"],
 ];
 export default function Login() {
@@ -10,6 +10,7 @@ export default function Login() {
     [p, Sp] = useState(""),
     [err, Serr] = useState(""),
     [show, Sshow] = useState(false);
+    
   const go = (ev) => {
     ev.preventDefault();
     if (!login(e, p)) Serr("Email or password is incorrect. Please try again.");
@@ -18,7 +19,7 @@ export default function Login() {
     <div className="login-page">
       <section className="login-visual">
         <div className="login-brand">
-          BNI<span>.</span>
+          KNIGHTS
         </div>
         <div className="login-visual-content">
           <div className="login-kicker">MEMBERS ASSOCIATION PORTAL</div>
@@ -54,7 +55,7 @@ export default function Login() {
       <section className="login-panel">
         <form className="login-form" onSubmit={go}>
           <div className="login-mobile-brand">
-            BNI<span>.</span>
+            KNIGHTS
           </div>
           <div className="eyebrow">WELCOME BACK</div>
           <h2>Sign in to your account</h2>
@@ -123,7 +124,7 @@ export default function Login() {
           </div>
         </form>
         <footer className="login-footer">
-          <span>© BNI Members Hub · All rights reserved</span>
+          <span>© Knights Members Hub · All rights reserved</span>
           <span>
             Designed and developed by{" "}
             <a
