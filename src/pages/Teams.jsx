@@ -10,7 +10,7 @@ import {
   teamUsers,
   teamStats,
   teamDetails,
-  addTeamDetails,
+  addTeamWithHead,
   fm,
   teamSchedule,
   saveTeamSchedule,
@@ -46,11 +46,13 @@ function TeamLogo({ team, className = "" }) {
   );
 }
 
-function TeamCard({ t }) {
+// TeamCard takes the count as a prop to keep the clean design
+function TeamCard({ t, splitCount }) {
   const head = headOf(t),
     s = teamStats(t);
   const details = teamDetails(t);
   const name = details.name;
+
   return (
     <article className="tcard team-overview-card">
       <div className="team-card-info">
@@ -65,10 +67,11 @@ function TeamCard({ t }) {
           <b>{name}</b>
           <span className="team-card-quote">“{details.quote}”</span>
           <small className="team-card-count">
-            {s.members} {s.members === 1 ? "member" : "members"}
+            {splitCount} {splitCount === 1 ? "member" : "members"}
           </small>
         </span>
       </div>
+      
       <div className="team-overview-actions">
         <Link className="btn-s" to={`/teams/${t}`}>View Details</Link>
       </div>
@@ -76,7 +79,7 @@ function TeamCard({ t }) {
         <span><b>{s.refs}</b> Referrals</span>
         <span><b>{s.joint}</b> Joint calls</span>
         <span><b>{fm(s.business)}</b> Business</span>
-        </div>
+      </div>
     </article>
   );
 }
@@ -85,7 +88,7 @@ function TeamMeetingSchedule({ team }) {
   const u = me(), saved = teamSchedule(team)
   const [form, setForm] = useState(() => ({
     d: saved ? toIso(saved.d) : '',
-    t: saved?.t || '08:30',
+    t: saved?.t || '',
     venue: saved?.venue || '',
   }))
   const [err, setErr] = useState('')
@@ -158,22 +161,22 @@ export default function Teams() {
     </tr>;
   }) : [];
   const [formOpen, setFormOpen] = useState(false),
-    [teamForm, setTeamForm] = useState({ name: "", logo: "", quote: "" }),
+    [teamForm, setTeamForm] = useState({ name: "", quote: "", headName: "", headEmail: "", headBusiness: "", headCategory: "", headPassword: "" }),
     [err, setErr] = useState("");
   const set = (k) => (e) => {
     setTeamForm((current) => ({ ...current, [k]: e.target.value }));
     setErr("");
   };
   const reset = () => {
-    setTeamForm({ name: "", logo: "", quote: "" });
+    setTeamForm({ name: "", quote: "", headName: "", headEmail: "", headBusiness: "", headCategory: "", headPassword: "" });
     setErr("");
   };
   const submit = (e) => {
     e.preventDefault();
-    const result = addTeamDetails(teamForm);
+    const result = addTeamWithHead(teamForm);
     setErr(result);
     if (result) return;
-    toastOk(`${teamForm.name.trim()} added successfully.`);
+    toastOk(`${teamForm.name.trim()} and ${teamForm.headName.trim()} added successfully.`);
     reset();
     setFormOpen(false);
   };
@@ -186,6 +189,15 @@ export default function Teams() {
     );
   const s = !isSA && teamStats(u.team);
 
+  // === Calculate the split members and counts ===
+  const allMembers = db.users.filter(x => x.role !== "sa"); 
+  const chunkSize = Math.ceil(allMembers.length / TEAMS.length);
+  const groupedMembers = TEAMS.map((_, i) => 
+    allMembers.slice(i * chunkSize, (i + 1) * chunkSize)
+  );
+  const splitCounts = groupedMembers.map(group => group.length);
+  // =================================================
+
   if (routeTeamId && (!TEAMS[detailTeam - 1] || (!isSA && u.team !== detailTeam))) {
     return <Navigate to="/teams" replace />;
   }
@@ -193,7 +205,9 @@ export default function Teams() {
   if (detailTeam) {
     const details = teamDetails(detailTeam);
     const name = details.name;
-    const members = teamUsers(detailTeam).sort(
+    
+    // Use the split members for the detail page as well
+    const members = (groupedMembers[detailTeam - 1] || []).sort(
       (a, b) => (a.role === "th" ? -1 : 1) - (b.role === "th" ? -1 : 1) || a.name.localeCompare(b.name)
     );
 
@@ -229,6 +243,10 @@ export default function Teams() {
                 <h3>{person.name}</h3>
                 <p className="member-company">{person.business || "Business name not provided"}</p>
                 <p className="member-category">{person.cat || "Business category not provided"}</p>
+                {person.visitors != null && <p className="member-category">
+                  Visitors: {person.visitors}{person.visitorCategory ? ` · ${person.visitorCategory}` : ""}{person.visitorStatus ? ` · ${person.visitorStatus}` : ""}
+                </p>}
+                {person.followUpStatus && <p className="member-category">Nov-26: {person.followUpStatus}</p>}
                 <div className="member-meta"><span>✉ {person.email}</span></div>
               </article>
             ))}
@@ -287,23 +305,39 @@ export default function Teams() {
               <div className="form-head">
                 <span className="form-head-icon">✦</span>
                 <div>
-                  <h3>New Power Team</h3>
-                  <p>Add a Power Team with its name, logo, and quote.</p>
+                  <h3>Register Power Team and Team Head</h3>
+                  <p>Create a Power Team and register its coordinator together.</p>
                 </div>
-                <span className="form-step">Team details</span>
+                <span className="form-step">Super Admin only</span>
               </div>
               <div className="reg-grid">
                 <div>
                   <label className="lbl" htmlFor="team-name">Team name *</label>
                   <input id="team-name" className="inp" value={teamForm.name} onChange={set("name")} placeholder="Power Team name" required />
                 </div>
-                <div>
-                  <label className="lbl" htmlFor="team-logo">Logo URL</label>
-                  <input id="team-logo" className="inp" type="url" value={teamForm.logo || ""} onChange={set("logo")} placeholder="https://example.com/logo.png" />
-                </div>
                 <div className="team-quote-field">
                   <label className="lbl" htmlFor="team-quote">Team quote *</label>
                   <textarea id="team-quote" className="inp" value={teamForm.quote} onChange={set("quote")} placeholder="Add a short quote for this team" required />
+                </div>
+                <div>
+                  <label className="lbl" htmlFor="head-name">Team Head full name *</label>
+                  <input id="head-name" className="inp" value={teamForm.headName} onChange={set("headName")} placeholder="Full name" required />
+                </div>
+                <div>
+                  <label className="lbl" htmlFor="head-email">Team Head email *</label>
+                  <input id="head-email" className="inp" type="email" value={teamForm.headEmail} onChange={set("headEmail")} placeholder="name@company.com" required />
+                </div>
+                <div>
+                  <label className="lbl" htmlFor="head-business">Business name *</label>
+                  <input id="head-business" className="inp" value={teamForm.headBusiness} onChange={set("headBusiness")} placeholder="Business name" required />
+                </div>
+                <div>
+                  <label className="lbl" htmlFor="head-category">Business category *</label>
+                  <input id="head-category" className="inp" value={teamForm.headCategory} onChange={set("headCategory")} placeholder="e.g. IT Services" required />
+                </div>
+                <div>
+                  <label className="lbl" htmlFor="head-password">Temporary password *</label>
+                  <input id="head-password" className="inp" type="password" value={teamForm.headPassword} onChange={set("headPassword")} placeholder="Minimum 6 characters" minLength={6} autoComplete="new-password" required />
                 </div>
               </div>
               <div className="reg-actions">
@@ -313,7 +347,7 @@ export default function Teams() {
                 <button type="button" className="btn-s" onClick={reset}>
                   Reset
                 </button>
-                <button type="submit" className="btn">Add Team</button>
+                <button type="submit" className="btn">Register Team</button>
               </div>
             </form>
           </div>
@@ -341,19 +375,20 @@ export default function Teams() {
               <TeamCard
                 key={i}
                 t={i + 1}
+                splitCount={splitCounts[i]}
               />
             ))}
           </div>
         </>
       ) : (
         <Tiles
-  items={[
-    ["Team members", s.members, "users"],
-    ["Referrals", s.refs, "network"],
-    ["Joint calls", s.joint, "activity"],
-    ["Business", fm(s.business), "trend"],
-  ]}
-/>
+          items={[
+            ["Team members", s.members, "users"],
+            ["Referrals", s.refs, "network"],
+            ["Joint calls", s.joint, "activity"],
+            ["Business", fm(s.business), "trend"],
+          ]}
+        />
       )}
 
       {!isSA && (

@@ -1,62 +1,195 @@
-import Select from '../Select'
 import { useState } from 'react'
-import { useLocation } from 'react-router-dom'
-import { useDB, me, U, SRC, STG, teamUsers, won, rv, att, goalOf, addNote, advance } from '../store'
-import { Tiles, Table, Pill, fm, RC } from '../ui'
+import Select from '../Select'
+import { useDB, me, U, scope, toIso, addThankYouNote } from '../store'
+import { PageHead } from '../ui'
+import { toastOk } from '../toast'
 
-const SC = ['n', 'a', 'g']
-const TABS = ['Thank-you notes', 'Referrals', '1-to-1s', 'Joint calls', 'Meetings', 'Business converted']
-
-function NoteTable({ list, u, db, onErr }) {
-  return <Table head={['Date', 'From', 'To', 'Because of', 'Details', 'Value', 'Stage', '']} rows={list.map(n => (
-    <tr key={db.notes.indexOf(n)}><td className="td">{n.d}</td><td className="td">{U(n.g).name}</td><td className="td">{U(n.to).name}</td><td className="td">{n.src}</td>
-      <td className="td !whitespace-normal min-w-[180px]">{n.det}</td><td className="td">{n.v ? fm(n.v) : '–'}</td><td className="td"><Pill c={SC[n.st]}>{STG[n.st]}</Pill></td>
-      <td className="td">{n.st < 2 && n.to === u.id && <button className="btn-s" onClick={() => onErr(advance(n))}>{n.st ? 'Convert to business' : 'Confirm value'}</button>}</td></tr>))} />
-}
+const dateInput = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+const noteStatus = note => note.status || (note.st === 2 ? 'Completed' : 'Pending')
 
 export default function Notes() {
-  const db = useDB(), u = me(), loc = useLocation()
-  const [f, setF] = useState({ to: '', src: SRC[0], det: '', v: '' }), [err, setErr] = useState('')
-  const [rid, setRid] = useState(loc.state?.rid || u.id), [tab, setTab] = useState(0)
-  const set = k => e => setF({ ...f, [k]: e.target.value })
-  const send = () => {
-    if (!f.to) return setErr('Choose a member to thank.')
-    if (!f.det.trim()) return setErr('Add a short detail.')
-    addNote({ g: u.id, to: +f.to, src: f.src, det: f.det.trim(), v: +f.v || 0 }); setF({ to: '', src: SRC[0], det: '', v: '' }); setErr('')
+  const db = useDB(), u = me(), isSA = u.role === 'sa'
+  const people = scope(u)
+  const fromPeople = u.role === 'mb' ? [u] : people
+  const [form, setForm] = useState({ g: String(u.id), to: '', det: '', converted: 'no' })
+  const [formError, setFormError] = useState('')
+  const [formSuccess, setFormSuccess] = useState('')
+  const [dateRange, setDateRange] = useState(() => {
+    const end = new Date(), start = new Date(end)
+    start.setMonth(start.getMonth() - 6)
+    return { start: dateInput(start), end: dateInput(end) }
+  })
+  const [reportType, setReportType] = useState('given')
+
+  const notes = db.notes.filter(n => isSA || (reportType === 'given' ? n.g === u.id : n.to === u.id))
+    .filter(n => isSA || U(n.g)?.team === u.team)
+    .filter(n => {
+      const date = toIso(n.d)
+      return date && (!dateRange.start || date >= dateRange.start) && (!dateRange.end || date <= dateRange.end)
+    })
+    .sort((a, b) => toIso(b.d).localeCompare(toIso(a.d)))
+  const total = notes.reduce((sum, n) => sum + (+n.v || 0), 0)
+  const runAt = new Date()
+  const reportLabel = reportType === 'given' ? 'Given' : 'Received'
+  const submitNote = event => {
+    event.preventDefault()
+    const error = addThankYouNote({ ...form, g: +form.g, to: +form.to, converted: form.converted === 'yes' })
+    if (error) {
+      setFormError(error)
+      setFormSuccess('')
+      return
+    }
+    setForm({ g: String(u.id), to: '', det: '', converted: 'no' })
+    setFormError('')
+    setFormSuccess(toastOk('Thank-you note added.'))
   }
-  const inScope = id => u.role === 'sa' || id === u.id || (u.role === 'th' && U(id).team === u.team)
-  const feed = db.notes.filter(n => inScope(n.g) || inScope(n.to))
-  const pick = u.role === 'sa' ? db.users : u.role === 'th' ? teamUsers(u.team) : [u]
-  const r = U(rid) || u
-  const jc = db.acts.filter(a => a.t === 'Joint call' && (a.f === r.id || a.to === r.id)).map(a => ({ d: a.d, g: a.f, to: a.to, det: a.note || '—' }))
-  const oo = db.ones.filter(o => o.f === r.id || o.to === r.id), a = att(r.id)
-  const rows = [
-    <NoteTable key="n" list={db.notes.filter(n => n.g === r.id || n.to === r.id)} u={u} db={db} onErr={setErr} />,
-    <Table key="r" head={['Direction', 'Member', 'Company', 'Status']} rows={db.refs.filter(x => x.f === r.id || x.to === r.id).map((x, i) => <tr key={i}><td className="td">{x.f === r.id ? 'Passed to' : 'Received from'}</td><td className="td">{U(x.f === r.id ? x.to : x.f).name}</td><td className="td">{x.co}</td><td className="td"><Pill c={RC[x.st]}>{x.st}</Pill></td></tr>)} />,
-    <Table key="o" head={['Date', 'With']} rows={oo.map((o, i) => <tr key={i}><td className="td">{o.d}</td><td className="td">{U(o.f === r.id ? o.to : o.f).name}</td></tr>)} />,
-    <Table key="j" head={['Date', 'With', 'Details']} rows={jc.map((n, i) => <tr key={i}><td className="td">{n.d}</td><td className="td">{U(n.g === r.id ? n.to : n.g).name}</td><td className="td">{n.det}</td></tr>)} />,
-    <Table key="m" head={['Meeting', 'Attendance']} rows={db.meets.map(m => <tr key={m.d}><td className="td">{m.d}</td><td className="td">{r.id in m.s ? <Pill c={m.s[r.id] === 'P' ? 'g' : 'r'}>{m.s[r.id] === 'P' ? 'Present' : 'Absent'}</Pill> : 'Not recorded'}</td></tr>)} />,
-    <Table key="b" head={['Date', 'Details', 'Value', 'Credited because']} rows={db.notes.filter(n => n.st === 2 && (n.g === r.id || n.to === r.id)).map((n, i) => <tr key={i}><td className="td">{n.d}</td><td className="td">{n.det}</td><td className="td">{fm(n.v)}</td><td className="td">{n.g === r.id ? 'Business I closed' : 'Referral I generated'}</td></tr>)} />,
-  ]
-  return (
-    <div>
-      <h1 className="text-2xl font-bold">Thank-you notes</h1>
-      <p className="text-gray-600 mb-4">Thank a member for a visit, meeting, joint call, 1-to-1 or direct referral. The member you thank confirms the value, then converts it into business.</p>
-      {u.role !== 'mb' && <div className="card grid sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
-        <div><label className="lbl">Thank</label><Select className="inp" value={f.to} onChange={set('to')}><option value="">Choose member…</option>{db.users.filter(x => x.id !== u.id).map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</Select></div>
-        <div><label className="lbl">Because of</label><Select className="inp" value={f.src} onChange={set('src')}>{SRC.map(s => <option key={s}>{s}</option>)}</Select></div>
-        <div><label className="lbl">Details</label><input className="inp" value={f.det} onChange={set('det')} /></div>
-        <div><label className="lbl">Value (₹)</label><input className="inp" type="number" min="0" value={f.v} onChange={set('v')} /></div>
-        <button className="btn" onClick={send}>Send note</button>
-      </div>}
-      {err && <div className="text-sm text-bni mt-2">{err}</div>}
-      <h2 className="h2">{u.role === 'mb' ? 'My notes' : 'Notes in my scope'}</h2>
-      <NoteTable list={feed} u={u} db={db} onErr={setErr} />
-      <h2 className="h2">Individual records</h2>
-      {pick.length > 1 && <Select className="inp !w-72 mb-3" value={r.id} onChange={e => setRid(+e.target.value)}>{pick.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</Select>}
-      <Tiles items={[['Business converted', fm(won(r.id))], ['Referral value generated', fm(rv(r.id))], ['Notes given', db.notes.filter(n => n.g === r.id).length], ['Notes received', db.notes.filter(n => n.to === r.id).length], ['1-to-1s · joint calls', `${oo.length} · ${jc.length}`], ['Attendance', a === null ? '–' : a.toFixed(0) + '%']]} />
-      <div className="flex gap-2 flex-wrap my-3">{TABS.map((t, i) => <button key={t} className={i === tab ? 'btn' : 'btn-s'} onClick={() => setTab(i)}>{t}</button>)}</div>
-      {rows[tab]}
+
+  return <>
+    <PageHead title="Thank-you notes" />
+
+    <form className="card mb-4" onSubmit={submitNote}>
+      <h2 className="text-lg font-semibold mb-4">Add a thank-you note</h2>
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div>
+          <label className="lbl" htmlFor="note-from">From *</label>
+          <Select id="note-from" className="inp" value={form.g} onChange={event => {
+            setForm({ ...form, g: event.target.value, ...(event.target.value === form.to ? { to: '' } : {}) })
+            setFormError('')
+            setFormSuccess('')
+          }} required>
+            {fromPeople.map(person => <option key={person.id} value={person.id}>{person.name}</option>)}
+          </Select>
+        </div>
+        <div>
+          <label className="lbl" htmlFor="note-to">To *</label>
+          <Select id="note-to" className="inp" value={form.to} onChange={event => {
+            setForm({ ...form, to: event.target.value })
+            setFormError('')
+            setFormSuccess('')
+          }} required>
+            <option value="">Select a member</option>
+            {people.filter(person => person.id !== +form.g).map(person => <option key={person.id} value={person.id}>{person.name}</option>)}
+          </Select>
+        </div>
+        <div>
+          <label className="lbl" htmlFor="note-details">Thank-you note *</label>
+          <textarea id="note-details" className="inp" value={form.det} onChange={event => {
+            setForm({ ...form, det: event.target.value })
+            setFormError('')
+            setFormSuccess('')
+          }} rows={3} required />
+        </div>
+        <div>
+          <label className="lbl" htmlFor="note-converted">Business converted *</label>
+          <Select id="note-converted" className="inp" value={form.converted} onChange={event => {
+            setForm({ ...form, converted: event.target.value })
+            setFormError('')
+            setFormSuccess('')
+          }} required>
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </Select>
+        </div>
+      </div>
+      <div className="flex items-center gap-3 mt-4">
+        <button className="btn" type="submit">Add thank-you note</button>
+        {formError && <span className="text-sm text-bni" role="alert">{formError}</span>}
+        {formSuccess && <span className="text-sm text-green-700" role="status">{formSuccess}</span>}
+      </div>
+    </form>
+
+    <div className="card !p-0 overflow-hidden" style={{ border: '1px solid #ccc' }}>
+      <div style={{ padding: '16px 20px', background: '#f8f9fa', borderBottom: '1px solid #ccc' }}>
+        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#333' }}>Chapter : TYFCB {reportLabel} Report</h3>
+        <div style={{ display: 'flex', gap: '40px', fontSize: '13px', marginTop: '10px', color: '#333' }}>
+          <div>Running User: <br/><b>{u.name}</b></div>
+          <div>Run At: <br/><b>{runAt.toLocaleDateString('en-GB')} {runAt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</b></div>
+          <div>Chapter: <br/><b>Knights</b></div>
+        </div>
+      </div>
+
+      <div className="tyfcb-report-controls">
+        <div className="tyfcb-tabs" role="tablist" aria-label="TYFCB report type">
+          {['given', 'received'].map(type => (
+            <button key={type} type="button" role="tab" aria-selected={reportType === type}
+              className={reportType === type ? 'active' : ''} onClick={() => setReportType(type)}>
+              TYFCB {type === 'given' ? 'Given' : 'Received'}
+            </button>
+          ))}
+        </div>
+        <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr><th colSpan={2} style={{ textAlign: 'left', paddingBottom: '8px', fontWeight: 'bold' }}>Parameters</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={{ padding: '4px 0', fontWeight: 'bold', width: '150px' }}>Start Date</td>
+              <td style={{ padding: '4px 0' }}><input aria-label="Report start date" type="date" className="inp" value={dateRange.start} onChange={e => setDateRange({ ...dateRange, start: e.target.value })} /></td>
+            </tr>
+            <tr>
+              <td style={{ padding: '4px 0', fontWeight: 'bold' }}>End Date</td>
+              <td style={{ padding: '4px 0' }}><input aria-label="Report end date" type="date" className="inp" value={dateRange.end} onChange={e => setDateRange({ ...dateRange, end: e.target.value })} /></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style={{ overflowX: 'auto', padding: '0 20px 20px' }}>
+        <table className="w-full" style={{ borderCollapse: 'collapse', minWidth: '900px', border: '1px solid #ccc' }}>
+          <thead>
+            <tr style={{ background: '#cf2030', color: '#fff' }}>
+              <th className="th" style={{ background: 'transparent', color: '#fff', borderRight: '1px solid #fff', borderBottom: '1px solid #fff', textAlign: 'left', padding: '8px' }}>Date</th>
+              <th className="th" style={{ background: 'transparent', color: '#fff', borderRight: '1px solid #fff', borderBottom: '1px solid #fff', textAlign: 'left', padding: '8px' }}>{reportType === 'given' ? 'Thank you to' : 'Given by'}</th>
+              <th className="th" style={{ background: 'transparent', color: '#fff', borderRight: '1px solid #fff', borderBottom: '1px solid #fff', textAlign: 'right', padding: '8px' }}>Amount</th>
+              <th className="th" style={{ background: 'transparent', color: '#fff', borderRight: '1px solid #fff', borderBottom: '1px solid #fff', textAlign: 'left', padding: '8px' }}>New/Repeat Business</th>
+              <th className="th" style={{ background: 'transparent', color: '#fff', borderRight: '1px solid #fff', borderBottom: '1px solid #fff', textAlign: 'left', padding: '8px' }}>Tier 1 (inside) referral, Tier 2 (outside) referral, Tier 3+ referral</th>
+              <th className="th" style={{ background: 'transparent', color: '#fff', borderRight: '1px solid #fff', borderBottom: '1px solid #fff', textAlign: 'left', padding: '8px' }}>Comments</th>
+              <th className="th" style={{ background: 'transparent', color: '#fff', borderBottom: '1px solid #fff', textAlign: 'left', padding: '8px' }}>PALMS Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {notes.length === 0 ? (
+              <tr>
+                <td className="td empty-cell" colSpan={7} style={{ textAlign: 'center', padding: '40px' }}>
+                  <div style={{ fontSize: '14px', color: '#888' }}>No TYFCB slips found.</div>
+                </td>
+              </tr>
+            ) : (
+              <>
+                {notes.map((n, i) => (
+                  <tr key={n.id || `${n.d}-${n.g}-${n.to}-${i}`} style={{ borderBottom: '1px solid #ddd' }}>
+                    <td className="td" style={{ padding: '8px', borderRight: '1px solid #ddd' }}>{n.d}</td>
+                    <td className="td font-semibold" style={{ padding: '8px', borderRight: '1px solid #ddd' }}>{U(reportType === 'given' ? n.to : n.g)?.name || '—'}</td>
+                    <td className="td text-right font-medium" style={{ padding: '8px', borderRight: '1px solid #ddd' }}>{(+n.v || 0).toLocaleString('en-IN')}</td>
+                    <td className="td" style={{ padding: '8px', borderRight: '1px solid #ddd' }}>{n.bType || 'New'}</td>
+                    <td className="td" style={{ padding: '8px', borderRight: '1px solid #ddd' }}>{n.rType || 'Tier 2 (outside)'}</td>
+                    <td className="td network-wrap" style={{ padding: '8px', borderRight: '1px solid #ddd', maxWidth: '200px' }}>{n.det || '—'}</td>
+                    <td className="td" style={{ padding: '8px', borderRight: '1px solid #ddd' }}>
+                      <span style={{ 
+                        display: 'inline-block', padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold',
+                        background: noteStatus(n) === 'Completed' ? '#e6f4ea' : '#f1f3f4',
+                        color: noteStatus(n) === 'Completed' ? '#1e8e3e' : '#5f6368',
+                        border: `1px solid ${noteStatus(n) === 'Completed' ? '#1e8e3e' : '#dadce0'}`
+                      }}>
+                        {noteStatus(n)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                <tr style={{ background: '#fff4d2' }}>
+                  <td className="td" style={{ padding: '8px', borderRight: '1px solid #ddd' }}></td>
+                  <td className="td font-bold" style={{ padding: '8px', borderRight: '1px solid #ddd', color: '#333' }}>Total</td>
+                  <td className="td text-right font-bold" style={{ padding: '8px', borderRight: '1px solid #ddd', color: '#333' }}>{total.toLocaleString('en-IN')}</td>
+                  <td className="td" style={{ padding: '8px', borderRight: '1px solid #ddd' }}></td>
+                  <td className="td" style={{ padding: '8px', borderRight: '1px solid #ddd' }}></td>
+                  <td className="td" style={{ padding: '8px', borderRight: '1px solid #ddd' }}></td>
+                  <td className="td" style={{ padding: '8px', borderRight: '1px solid #ddd' }}></td>
+                </tr>
+              </>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
-  )
+  </>
 }

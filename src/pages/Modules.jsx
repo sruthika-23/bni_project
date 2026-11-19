@@ -1,5 +1,5 @@
 import Icon from "../icons";
-import Select from "../Select";
+import Select from "../Select";                 
 import { useState } from "react";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import {
@@ -77,7 +77,7 @@ export function Members() {
     [q, Sq] = useState(""),
     [team, St] = useState("all"),
     [formOpen, setFormOpen] = useState(false),
-    [f, setF] = useState({ name: "", email: "", business: "", cat: "", pw: "", role: "mb", team: "" }),
+    [f, setF] = useState({ name: "", email: "", business: "", cat: "", pw: "", role: "", team: "" }),
     [err, setErr] = useState("");
   const isSA = u.role === "sa", canRegister = u.role !== "mb";
   const set = key => e => {
@@ -85,7 +85,7 @@ export function Members() {
     setErr("");
   };
   const reset = () => {
-    setF({ name: "", email: "", business: "", cat: "", pw: "", role: "mb", team: "" });
+    setF({ name: "", email: "", business: "", cat: "", pw: "", role: "", team: "" });
     setErr("");
   };
   const submit = e => {
@@ -169,10 +169,10 @@ export function Members() {
                 <div><label className="lbl" htmlFor="member-category">Business category *</label><input id="member-category" className="inp" value={f.cat} onChange={set("cat")} placeholder="e.g. IT Services" required /></div>
                 <div><label className="lbl" htmlFor="member-password">Temporary password *</label><input id="member-password" className="inp" type="password" value={f.pw} onChange={set("pw")} placeholder="Minimum 6 characters" autoComplete="new-password" minLength={6} required /></div>
                 <div><label className="lbl">Account type *</label>
-                  {isSA ? <Select className="inp" value={f.role} onChange={set("role")}><option value="sa">Super Admin</option><option value="th">Team Head Coordinator</option><option value="mb">Member</option></Select> : <input className="inp" value="Member" disabled aria-label="Account type" />}
+                  {isSA ? <Select className="inp" value={f.role} onChange={set("role")} required><option value="">Choose account type</option><option value="sa">Super Admin</option><option value="th">Team Head Coordinator</option><option value="mb">Member</option></Select> : <input className="inp" value="Member" disabled aria-label="Account type" />}
                 </div>
-                {isSA && f.role !== "sa" && <div><label className="lbl">Power team *</label>
-                  <Select className="inp" value={f.team} onChange={set("team")}><option value="">Choose a power team</option>
+                {isSA && f.role && f.role !== "sa" && <div><label className="lbl">Power team *</label>
+                  <Select className="inp" value={f.team} onChange={set("team")} required><option value="">Choose a power team</option>
                     {TEAMS.map((name, i) => (f.role !== "th" || !headOf(i + 1)) && <option key={name} value={i + 1}>{i + 1} · {name}</option>)}</Select></div>}
               </div>
               <div className="reg-actions">

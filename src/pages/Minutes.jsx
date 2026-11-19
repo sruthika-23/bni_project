@@ -1,15 +1,15 @@
 import Icon from '../icons'
 import { useState } from 'react'
-import { useDB, me, U, scope, TEAMS, fm, fmtD, toIso, isoToday, addMom, updMom } from '../store'
+import { useDB, me, U, scope, TEAMS, fm, fmtD, toIso, addMom, updMom } from '../store'
 import { PageHead, Table, Pill } from '../ui'
 
 const OPT = { P: 'Present', A: 'Absent', E: 'Excused' }, CL = { P: 'g', A: 'r', E: 'a' }
 const t12 = t => { if (!t) return '—'; const [h, m] = t.split(':'); return `${+h % 12 || 12}:${m} ${+h < 12 ? 'AM' : 'PM'}` }
 const AG = [['welcome', 'Welcome address by Captain (1 min)'], ['intro', 'Power Team members introduction'], ['visitors', 'Visitors introduction'], ['present', 'Members give their presentation (2–3 mins)']]
 const blankAp = () => ({ p: '', tl: '', r: '', st: '', fu: '' })
-const blank = (u, moms) => ({ no: Math.max(0, ...moms.map(m => m.no)) + 1, team: u.team || 1, d: fmtD(isoToday()), t: '08:30', venue: '', captain: '', by: u.name, welcome: '', intro: '', visitors: '', present: '', joint: '0', socials: '', other: '', ap: [blankAp()], nd: '', nt: '08:30', nv: '' })
+const blank = u => ({ no: '', team: u.role === 'sa' ? '' : String(u.team), d: '', t: '', venue: '', captain: '', by: '', welcome: '', intro: '', visitors: '', present: '', joint: '', socials: '', other: '', ap: [], nd: '', nt: '', nv: '' })
 
-function MomForm({ init, isNew, onSave, onCancel }) {
+function MomForm({ init, isNew, user, onSave, onCancel }) {
   const [f, setF] = useState(init), [err, setErr] = useState('')
   const set = k => e => setF({ ...f, [k]: e.target.value })
   const setAp = (i, k, v) => setF({ ...f, ap: f.ap.map((a, j) => j === i ? { ...a, [k]: v } : a) })
@@ -17,13 +17,17 @@ function MomForm({ init, isNew, onSave, onCancel }) {
     e.preventDefault()
     if (!f.d) return setErr('Select the meeting date.')
     if (!(+f.no > 0)) return setErr('Enter a valid meeting number.')
-    onSave({ ...f, no: +f.no, ap: f.ap.filter(a => a.p.trim()) }, setErr)
+    if (!TEAMS[+f.team - 1]) return setErr('Choose a valid Power Team.')
+    onSave({ ...f, no: +f.no, team: +f.team, ap: f.ap.filter(a => a.p.trim()) }, setErr)
   }
   return <form className="card" onSubmit={submit}>
     <h3 className="font-semibold mb-3">{isNew ? 'New minutes of meeting' : `Edit minutes · Meeting ${f.no}`}</h3>
     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-      <div><label className="lbl">Meeting no. *</label><input className="inp" type="number" min="1" value={f.no} onChange={set('no')} disabled={!isNew} /></div>
-      <div><label className="lbl">Date *</label><input className="inp" type="date" value={toIso(f.d)} onChange={e => setF({ ...f, d: fmtD(e.target.value) })} /></div>
+      <div><label className="lbl">Meeting no. *</label><input className="inp" type="number" min="1" value={f.no} onChange={set('no')} disabled={!isNew} required /></div>
+      <div><label className="lbl">Power Team *</label>{user.role === 'sa'
+        ? <select className="inp" value={f.team} onChange={set('team')} disabled={!isNew} required><option value="">Choose Power Team</option>{TEAMS.map((name, i) => <option key={name} value={i + 1}>{i + 1} · {name}</option>)}</select>
+        : <input className="inp" value={TEAMS[user.team - 1] || ''} disabled aria-label="Power Team" />}</div>
+      <div><label className="lbl">Date *</label><input className="inp" type="date" value={toIso(f.d)} onChange={e => setF({ ...f, d: fmtD(e.target.value) })} required /></div>
       <div><label className="lbl">Time</label><input className="inp" type="time" value={f.t} onChange={set('t')} /></div>
       <div><label className="lbl">Venue</label><input className="inp" value={f.venue} onChange={set('venue')} /></div>
       <div><label className="lbl">Captain / Chair</label><input className="inp" value={f.captain} onChange={set('captain')} /></div>
@@ -67,7 +71,7 @@ export default function Minutes() {
   }
   const head = <PageHead eyebrow="MINUTES OF MEETING" title="Minutes of Meeting" sub="Attendance, agenda, member-wise updates, business generated and the action plan for each meeting."
     action={manage && mode === 'view' ? <button className="btn" onClick={() => setMode('new')}><Icon name="plus" size={15} stroke={2.6} /> New minutes</button> : null} />
-  if (mode !== 'view') return <>{head}<MomForm init={mode === 'new' ? blank(u, db.moms) : m} isNew={mode === 'new'} onSave={save} onCancel={() => setMode('view')} /></>
+  if (mode !== 'view') return <>{head}<MomForm init={mode === 'new' ? blank(u) : m} isNew={mode === 'new'} user={u} onSave={save} onCancel={() => setMode('view')} /></>
   if (!m) return <>{head}<div className="card text-sm text-gray-500">No minutes recorded yet.</div></>
   const att = db.meets.find(x => x.d === m.d), team = scope({ ...u, role: 'th', team: m.team })
   const annex = db.opps.filter(o => o.d === m.d && U(o.m)?.team === m.team), biz = db.notes.filter(n => n.st === 2 && n.d === m.d && U(n.g)?.team === m.team)

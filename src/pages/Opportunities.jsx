@@ -2,15 +2,15 @@ import Icon from '../icons'
 import { toastOk } from '../toast'
 import Select from '../Select'
 import { useState } from 'react'
-import { useDB, me, U, scope, addOpp, delOpp, fmtD, isoToday, dv, canManage } from '../store'
+import { useDB, me, U, scope, addOpp, delOpp, fmtD, dv, canManage } from '../store'
 import { PageHead, Table } from '../ui'
 
 const Chips = ({ v }) => { const a = String(v || '').split(';').map(s => s.trim()).filter(Boolean); return a.length ? a.map(s => <span key={s} className="chip">{s}</span>) : '—' }
-const blank = u => ({ d: isoToday(), m: u.role === 'mb' ? u.id : u.role === 'th' ? u.id : '', cl: '', pr: '', pp: '', ask: '', ow: '' })
+const blank = () => ({ d: '', m: '', cl: '', pr: '', pp: '', ask: '', ow: '' })
 
 export default function Opportunities() {
   const db = useDB(), u = me(), people = scope(u)
-  const [f, setF] = useState(() => blank(u)), [q, Sq] = useState(''), [mem, Sm] = useState('all'), [err, setErr] = useState(''), [ok, setOk] = useState('')
+  const [f, setF] = useState(blank), [q, Sq] = useState(''), [mem, Sm] = useState('all'), [err, setErr] = useState(''), [ok, setOk] = useState('')
   const set = k => e => { setF({ ...f, [k]: e.target.value }); setOk('') }
   const list = db.opps.filter(o => (u.role === 'sa' || U(o.m)?.team === u.team) && (mem === 'all' || o.m === +mem)
     && [o.cl, o.pr, o.pp, o.ask, U(o.m)?.name, U(o.ow)?.name].join(' ').toLowerCase().includes(q.toLowerCase()))
@@ -22,15 +22,15 @@ export default function Opportunities() {
     if (!m) return setErr('Choose the reporting member.')
     if (![f.cl, f.pr, f.pp, f.ask].some(x => x.trim())) return setErr('Enter a client, prospect or specific ask.')
     addOpp({ d: fmtD(f.d), m, cl: f.cl.trim(), pr: f.pr.trim(), pp: f.pp.trim(), ask: f.ask.trim(), ow: f.ow ? +f.ow : null })
-    setF(blank(u)); setErr(''); setOk(toastOk('Record added. Any specific ask also appears in Specific Connects.'))
+    setF(blank()); setErr(''); setOk(toastOk('Record added. Any specific ask also appears in Specific Connects.'))
   }
   return <>
     <PageHead eyebrow="MEETING UPDATES" title="Opportunities" sub="New clients, active prospects and specific connection requests reported at each bi-weekly meeting." />
     {u.role !== 'mb' && <form className="card" onSubmit={submit}>
       <h3 className="font-semibold mb-3">Add meeting update</h3>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <div><label className="lbl">Meeting date *</label><input className="inp" type="date" value={f.d} onChange={set('d')} /></div>
-        {u.role !== 'mb' && <div><label className="lbl">Reporting member *</label><Select className="inp" value={f.m} onChange={set('m')}><option value="">Choose member</option>{people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></div>}
+        <div><label className="lbl">Meeting date *</label><input className="inp" type="date" value={f.d} onChange={set('d')} required /></div>
+        {u.role !== 'mb' && <div><label className="lbl">Reporting member *</label><Select className="inp" value={f.m} onChange={set('m')} required><option value="">Choose member</option>{people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></div>}
         <div><label className="lbl">New client / company</label><input className="inp" value={f.cl} onChange={set('cl')} /></div>
         <div><label className="lbl">Product / service</label><input className="inp" value={f.pr} onChange={set('pr')} /></div>
         <div><label className="lbl">Prospect / pipeline client</label><input className="inp" value={f.pp} onChange={set('pp')} /></div>

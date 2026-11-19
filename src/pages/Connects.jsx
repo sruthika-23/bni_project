@@ -8,13 +8,13 @@ import { PageHead, Tiles, Table, Pill } from '../ui'
 
 const CS = ['Requested', 'Introduced', 'In discussion', 'Won', 'Closed']
 const CC = { Requested: 'n', Introduced: 'a', 'In discussion': 'a', Won: 'g', Closed: 'n' }
-const blank = u => ({ d: isoToday(), f: u.role === 'mb' || u.role === 'th' ? u.id : '', t: '', cp: '', ask: '', ow: '' })
+const blank = () => ({ d: '', f: '', t: '', cp: '', ask: '', ow: '' })
 const nowD = () => fmtD(isoToday())
 
 export default function Connects() {
   const db = useDB(), u = me(), people = scope(u)
   const [searchParams] = useSearchParams()
-  const [f, setF] = useState(() => blank(u)), [q, Sq] = useState(() => searchParams.get('q') || ''), [st, Ss] = useState('all'), [err, setErr] = useState(''), [ok, setOk] = useState('')
+  const [f, setF] = useState(blank), [q, Sq] = useState(() => searchParams.get('q') || ''), [st, Ss] = useState('all'), [err, setErr] = useState(''), [ok, setOk] = useState('')
   const set = k => e => { setF({ ...f, [k]: e.target.value }); setOk('') }
   const all = db.connects.filter(c => u.role === 'sa' || U(c.f)?.team === u.team)
   const list = all.filter(c => (st === 'all' || c.st === st) && [c.t, c.cp, c.ask, U(c.f)?.name, U(c.ow)?.name].join(' ').toLowerCase().includes(q.toLowerCase()))
@@ -23,11 +23,12 @@ export default function Connects() {
   const submit = e => {
     e.preventDefault()
     const m = u.role === 'mb' ? u.id : +f.f
+    if (!f.d) return setErr('Select the date requested.')
     if (!m) return setErr('Choose the requesting member.')
     if (!f.t.trim()) return setErr('Enter the target company / industry.')
     const result = addConnect({ d: fmtD(f.d), f: m, t: f.t.trim(), cp: f.cp.trim(), ask: f.ask.trim(), ow: f.ow ? +f.ow : null })
     if (result) return setErr(result)
-    setF(blank(u)); setErr(''); setOk(toastOk('Connect request added.'))
+    setF(blank()); setErr(''); setOk(toastOk('Connect request added.'))
   }
   const setStatus = (c, s) => updConnect(c, { st: s, intro: s !== 'Requested' && !c.intro ? nowD() : s === 'Requested' ? '' : c.intro })
   return <>
@@ -36,8 +37,8 @@ export default function Connects() {
     <form className="card mt-4" onSubmit={submit}>
       <h3 className="font-semibold mb-3">Add a connect request</h3>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        <div><label className="lbl">Date requested *</label><input className="inp" type="date" value={f.d} onChange={set('d')} /></div>
-        {u.role !== 'mb' && <div><label className="lbl">Requesting member *</label><Select className="inp" value={f.f} onChange={set('f')}><option value="">Choose member</option>{people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></div>}
+        <div><label className="lbl">Date requested *</label><input className="inp" type="date" value={f.d} onChange={set('d')} required /></div>
+        {u.role !== 'mb' && <div><label className="lbl">Requesting member *</label><Select className="inp" value={f.f} onChange={set('f')} required><option value="">Choose member</option>{people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></div>}
         <div><label className="lbl">Target company / industry *</label><input className="inp" value={f.t} onChange={set('t')} /></div>
         <div><label className="lbl">Contact person / designation</label><input className="inp" value={f.cp} onChange={set('cp')} /></div>
         <div><label className="lbl">Specific connection / ask</label><input className="inp" value={f.ask} onChange={set('ask')} /></div>

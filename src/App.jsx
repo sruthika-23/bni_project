@@ -82,7 +82,7 @@ function Shell({ u }) {
       <Route path="/business-network" element={<BusinessNetwork/>}/>
       <Route path="/clients" element={<Navigate to="/opportunities" replace/>}/><Route path="/meetings" element={<Navigate to="/attendance" replace/>}/>
       <Route path="*" element={<Navigate to="/dashboard" replace/>}/>
-    </Routes><footer className="app-credit">Designed and developed by <a href="https://digiworldsoftwaresolutions.com/" target="_blank" rel="noreferrer">Digiworld</a></footer></main>
+    </Routes><footer className="app-credit">Designed and developed by <a href="https://digiworldsoftwaresolutions.com/" target="_blank" rel="noreferrer" aria-label="Digiworld Software Solutions"><img className="digiworld-logo" src="/digiworld-logo.png" alt="" /></a></footer></main>
   </div>
 }
 export default function App() { useDB(); const u = me(); return <><HashRouter>{u ? <Shell u={u}/> : <Login/>}</HashRouter><Toaster/></> }

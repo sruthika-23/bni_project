@@ -3,7 +3,7 @@ import { toastOk } from '../toast'
 import Select from '../Select'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useDB, me, U, scope, addOne, addAct, addConnect, fmtD, isoToday, dv, fm } from '../store'
+import { useDB, me, U, scope, addOne, addAct, addConnect, fmtD, dv, fm } from '../store'
 import { PageHead, Tiles, Table, Pill } from '../ui'
 
 const KINDS = ['1-to-1', 'Joint call', 'Power Date']
@@ -21,8 +21,8 @@ export default function Activity({ only }) {
   const db = useDB(), u = me(), people = scope(u), ids = people.map(p => p.id)
   const [searchParams, setSearchParams] = useSearchParams()
   const tab = searchParams.get('tab') || (only ? 'joint' : 'all')
-  const [f, setF] = useState({ d: isoToday(), by: '', k: KINDS[0], to: '', note: '' })
-  const [cf, setCf] = useState({ d: isoToday(), f: u.role === 'sa' ? '' : u.id, t: '', cp: '', ask: '', ow: '' })
+  const [f, setF] = useState({ d: '', by: '', k: '', to: '', note: '' })
+  const [cf, setCf] = useState({ d: '', f: '', t: '', cp: '', ask: '', ow: '' })
   const [q, setQ] = useState(''), [mem, setMem] = useState('all')
   const [err, setErr] = useState(''), [ok, setOk] = useState('')
   const [connectErr, setConnectErr] = useState(''), [connectOk, setConnectOk] = useState('')
@@ -30,7 +30,7 @@ export default function Activity({ only }) {
   const set = key => event => { setF({ ...f, [key]: event.target.value }); setOk('') }
   const setConnect = key => event => { setCf({ ...cf, [key]: event.target.value }); setConnectOk('') }
   const setTab = value => { setSearchParams(value === 'all' ? {} : { tab: value }); setErr(''); setConnectErr('') }
-  const by = u.role === 'mb' || !f.by ? u.id : +f.by
+  const by = u.role === 'mb' ? u.id : +f.by
   
   const rows = [
     ...db.ones.map(o => ({ id: `one-${o.d}-${o.f}-${o.to}`, d: o.d, by: o.f, k: '1-to-1', to: o.to, note: '' })),
@@ -68,21 +68,24 @@ export default function Activity({ only }) {
     event.preventDefault()
     const kind = tab === 'one' ? '1-to-1' : tab === 'joint' ? 'Joint call' : f.k
     if (!f.d) return setErr('Select the date.')
+    if (tab === 'all' && !f.k) return setErr('Choose the activity.')
+    if (!by) return setErr('Choose the reporting member.')
     if (!f.to) return setErr('Choose the member you met.')
     if (+f.to === by) return setErr('Choose a different member.')
     if (kind === '1-to-1') addOne(by, +f.to, fmtD(f.d))
     else addAct({ t: kind, f: by, to: +f.to, d: fmtD(f.d), note: f.note.trim() })
-    setF({ ...f, to: '', note: '' }); setErr(''); setOk(toastOk('Activity recorded.'))
+    setF({ d: '', by: '', k: '', to: '', note: '' }); setErr(''); setOk(toastOk('Activity recorded.'))
   }
 
   const submitConnect = event => {
     event.preventDefault()
     const member = u.role === 'mb' ? u.id : +cf.f
+    if (!cf.d) return setConnectErr('Select the date requested.')
     if (!member) return setConnectErr('Choose the requesting member.')
     if (!cf.t.trim()) return setConnectErr('Enter the target company / industry.')
     const result = addConnect({ d: fmtD(cf.d), f: member, t: cf.t.trim(), cp: cf.cp.trim(), ask: cf.ask.trim(), ow: cf.ow ? +cf.ow : null })
     if (result) return setConnectErr(result)
-    setCf({ d: isoToday(), f: u.role === 'sa' ? '' : u.id, t: '', cp: '', ask: '', ow: '' })
+    setCf({ d: '', f: '', t: '', cp: '', ask: '', ow: '' })
     setConnectErr(''); setConnectOk(toastOk('Specific connect added.'))
   }
 
@@ -119,9 +122,9 @@ export default function Activity({ only }) {
           {u.role !== 'mb' && (
             <div>
               <label className="lbl">Reporting member</label>
-              <Select className="inp w-full" value={f.by} onChange={set('by')}>
-                <option value="">Myself</option>
-                {people.filter(p => p.id !== u.id).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              <Select className="inp w-full" value={f.by} onChange={set('by')} required>
+                <option value="">Choose member</option>
+                {people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </Select>
             </div>
           )}
@@ -129,7 +132,8 @@ export default function Activity({ only }) {
           {tab === 'all' && (
             <div>
               <label className="lbl">Activity *</label>
-              <Select className="inp w-full" value={f.k} onChange={set('k')}>
+              <Select className="inp w-full" value={f.k} onChange={set('k')} required>
+                <option value="">Choose activity</option>
                 {KINDS.map(kind => <option key={kind}>{kind}</option>)}
               </Select>
             </div>
@@ -137,7 +141,7 @@ export default function Activity({ only }) {
 
           <div>
             <label className="lbl">With (member) *</label>
-            <Select className="inp w-full" value={f.to} onChange={event => setF({ ...f, to: event.target.value })}>
+            <Select className="inp w-full" value={f.to} onChange={event => setF({ ...f, to: event.target.value })} required>
               <option value="">Choose member</option>
               {people.filter(person => person.id !== by).map(person => <option key={person.id} value={person.id}>{person.name}</option>)}
             </Select>
@@ -181,7 +185,7 @@ export default function Activity({ only }) {
           {u.role !== 'mb' && (
             <div>
               <label className="lbl">Requesting member *</label>
-              <Select className="inp w-full" value={cf.f} onChange={setConnect('f')}>
+              <Select className="inp w-full" value={cf.f} onChange={setConnect('f')} required>
                 <option value="">Choose member</option>
                 {people.map(person => <option key={person.id} value={person.id}>{person.name}</option>)}
               </Select>

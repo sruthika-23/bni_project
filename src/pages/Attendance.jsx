@@ -1,7 +1,7 @@
 import { toastOk } from '../toast'
 import Select from '../Select'
 import { useState } from 'react'
-import { useDB, me, scope, addMeeting, fmtD, isoToday, canManage } from '../store'
+import { useDB, me, scope, addMeeting, fmtD, canManage } from '../store'
 import { PageHead, Tiles, Table, Pill } from '../ui'
 
 const OPT = { P: 'Present', A: 'Absent', E: 'Excused' }, CL = { P: 'g', A: 'r', E: 'a' }
@@ -9,10 +9,15 @@ const first = n => n.split(' ')[0]
 
 export default function Attendance() {
   const db = useDB(), u = me(), people = scope(u), edit = u.role !== 'mb'
-  const [d, setD] = useState(isoToday()), [s, setS] = useState({}), [ok, setOk] = useState('')
+  const [d, setD] = useState(''), [s, setS] = useState({}), [ok, setOk] = useState(''), [err, setErr] = useState('')
   const existing = db.meets.find(m => m.d === fmtD(d))
-  const val = id => s[id] || existing?.s[id] || 'P'
-  const save = () => { if (!d) return; addMeeting(fmtD(d), Object.fromEntries(people.map(p => [p.id, val(p.id)]))); setS({}); setOk(toastOk(`Attendance saved for ${fmtD(d)}.`)) }
+  const val = id => s[id] ?? existing?.s[id] ?? ''
+  const save = () => {
+    if (!d) return setErr('Select the meeting date.')
+    if (people.some(person => !val(person.id))) return setErr('Choose an attendance status for every member.')
+    addMeeting(fmtD(d), Object.fromEntries(people.map(p => [p.id, val(p.id)])))
+    setD(''); setS({}); setErr(''); setOk(toastOk(`Attendance saved for ${fmtD(d)}.`))
+  }
   const per = db.meets.map(m => { const rec = people.filter(p => p.id in m.s), c = k => rec.filter(p => m.s[p.id] === k).length; return { m, P: c('P'), A: c('A'), E: c('E'), pct: rec.length ? c('P') / rec.length * 100 : 0 } })
   const avg = per.length ? per.reduce((a, r) => a + r.pct, 0) / per.length : 0
   return <>
@@ -20,11 +25,11 @@ export default function Attendance() {
     <Tiles items={[['Meetings held', `${db.meets.length} of ~12`], ['Average attendance', `${avg.toFixed(1)}%`], ['Team members', people.length]]} />
     {edit && <div className="card mt-4">
       <h3 className="font-semibold mb-3">Record attendance</h3>
-      <div className="max-w-xs mb-3"><label className="lbl">Meeting date</label><input className="inp" type="date" value={d} onChange={e => { setD(e.target.value); setS({}); setOk('') }} /></div>
+      <div className="max-w-xs mb-3"><label className="lbl">Meeting date *</label><input className="inp" type="date" value={d} onChange={e => { setD(e.target.value); setS({}); setOk(''); setErr('') }} required /></div>
       {existing && <p className="text-xs text-gray-500 mb-2">Attendance already exists for this date. Saving updates it.</p>}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">{people.filter(p => u.role === 'sa' || canManage(u, p)).map(p => <div key={p.id} className="flex items-center justify-between gap-3 border border-gray-100 rounded px-3 py-2"><span className="text-sm font-semibold">{p.name}</span>
-        <Select className="inp !w-28" value={val(p.id)} onChange={e => { setS({ ...s, [p.id]: e.target.value }); setOk('') }}>{Object.entries(OPT).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></div>)}</div>
-      <div className="flex items-center gap-3 mt-4"><button className="btn" onClick={save}>Save attendance</button>{ok && <span className="text-sm text-green-700">{ok}</span>}</div>
+        <Select className="inp !w-28" value={val(p.id)} onChange={e => { setS({ ...s, [p.id]: e.target.value }); setOk(''); setErr('') }} required><option value="">Choose</option>{Object.entries(OPT).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></div>)}</div>
+      <div className="flex items-center gap-3 mt-4"><button className="btn" onClick={save}>Save attendance</button>{err && <span className="text-sm text-bni" role="alert">{err}</span>}{ok && <span className="text-sm text-green-700">{ok}</span>}</div>
     </div>}
     <h2 className="h2">Meeting-wise attendance</h2>
     <Table head={['Meeting date', ...people.map(p => first(p.name)), 'Present', 'Absent', 'Excused', 'Attendance %']} rows={per.map(r => <tr key={r.m.d}><td className="td font-semibold">{r.m.d}</td>

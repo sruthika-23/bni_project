@@ -2,9 +2,9 @@ import Icon from './icons'
 import { toastOk } from './toast'
 import Select from './Select'
 import { useState } from 'react'
-import { me, scope, addRef, fmtD, isoToday } from './store'
+import { me, scope, addRef, fmtD } from './store'
 
-const blank = () => ({ d: isoToday(), to: '', co: '', cn: '', cd: '', ph: '', em: '', loc: '', req: '' })
+const blank = () => ({ d: '', to: '', co: '', cn: '', cd: '', ph: '', em: '', loc: '', req: '' })
 const validPhone = p => /^\d{10,13}$/.test(p.replace(/[\s\-()+]/g, ''))
 
 export default function ReferralForm() {
@@ -25,8 +25,8 @@ export default function ReferralForm() {
   return <form className="card" onSubmit={submit}>
     <div className="form-head"><span className="form-head-icon">⇄</span><div><h3>Pass a Referral</h3><p>Share complete contact details so the receiving member can follow up quickly.</p></div><span className="form-step">New referral</span></div>
     <div className="grid sm:grid-cols-2 lg:grid-cols-3">
-      <div><label className="lbl">Date *</label><input className="inp" type="date" value={f.d} onChange={set('d')} /></div>
-      <div><label className="lbl">Referral to (member) *</label><Select className="inp" value={f.to} onChange={set('to')}><option value="">Select receiving member</option>{people.map(p => <option value={p.id} key={p.id}>{p.name} · {p.cat}</option>)}</Select></div>
+      <div><label className="lbl">Date *</label><input className="inp" type="date" value={f.d} onChange={set('d')} required /></div>
+      <div><label className="lbl">Referral to (member) *</label><Select className="inp" value={f.to} onChange={set('to')} required><option value="">Select receiving member</option>{people.map(p => <option value={p.id} key={p.id}>{p.name} · {p.cat}</option>)}</Select></div>
       <div><label className="lbl">Company / business name *</label><input className="inp" value={f.co} onChange={set('co')} placeholder="e.g. Yamaha Motors" /></div>
       <div><label className="lbl">Contact person name *</label><input className="inp" value={f.cn} onChange={set('cn')} /></div>
       <div><label className="lbl">Designation</label><input className="inp" value={f.cd} onChange={set('cd')} placeholder="e.g. Purchase Manager" /></div>

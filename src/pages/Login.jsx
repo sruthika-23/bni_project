@@ -131,8 +131,9 @@ export default function Login() {
               href="https://digiworldsoftwaresolutions.com/"
               target="_blank"
               rel="noreferrer"
+              aria-label="Digiworld Software Solutions"
             >
-              Digiworld
+              <img className="digiworld-logo" src="/digiworld-logo.png" alt="" />
             </a>
           </span>
         </footer>

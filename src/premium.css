@@ -15,6 +15,7 @@
   --ring:0 0 0 4px var(--bni-glow);
   --font-display:"Inter",system-ui,sans-serif;
 }
+.network-name-field{grid-column:1/-1}
 body{background:var(--canvas);color:var(--ink);font-feature-settings:"cv11","ss01";letter-spacing:-.003em}
 ::selection{background:var(--bni-red);color:#fff}
 *{scrollbar-width:thin;scrollbar-color:#d3d6dc transparent}
@@ -49,7 +50,7 @@ body{background:var(--canvas);color:var(--ink);font-feature-settings:"cv11","ss0
 .logout{border-radius:10px;border:1px solid var(--line);padding:9px 14px;font-weight:600;color:var(--ink-2);transition:.2s}
 .logout:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
 
-/* ---------- Sidebar (dark, executive) ---------- */
+/* ---------- Sidebar ---------- */
 .sidebar{background:linear-gradient(180deg,#14171f 0%,#1b1f2a 100%);border-right:0;padding:26px 14px 16px;top:72px;height:calc(100vh - 72px);min-height:0}
 .side-label{color:#6f7686;font-size:10px;letter-spacing:.2em;padding:0 14px 10px}
 .side-label-spaced{margin-top:22px}
@@ -90,7 +91,7 @@ body{background:var(--canvas);color:var(--ink);font-feature-settings:"cv11","ss0
 .workspace .btn-s:hover,.btn-s:hover{background:#f8f9fb;border-color:#c5c9d1;color:var(--ink);box-shadow:var(--sh-1)}
 .reg-actions .btn,.reg-actions .btn-s{height:42px}
 
-/* ---------- Forms: inputs, labels, dropdowns ---------- */
+/* ---------- Forms ---------- */
 .lbl{font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.07em;color:#5d6572;margin-bottom:7px}
 .workspace .inp,.inp{height:44px;padding:0 14px;border:1px solid #dcdfe5;border-radius:var(--r-sm);background:#fff;color:var(--ink);font-size:13.5px;box-shadow:0 1px 2px rgba(20,23,31,.03);transition:border-color .18s,box-shadow .18s,background .18s}
 .inp::placeholder{color:#a9afba}
@@ -100,7 +101,6 @@ textarea.inp{height:auto;min-height:96px;padding:12px 14px;line-height:1.5;resiz
 .inp[type=date]{padding-right:10px}
 .inp:disabled{background:#f4f5f7;color:var(--soft);cursor:not-allowed}
 
-/* Premium dropdown (styled native select — keeps full keyboard/mobile support) */
 select,select.inp,.workspace select.inp{-webkit-appearance:none;-moz-appearance:none;appearance:none;cursor:pointer;padding-right:42px;
   background-color:#fff;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
@@ -138,7 +138,10 @@ select.inp.\!w-32,td select.inp{height:34px;font-size:12.5px;padding-right:34px;
 .workspace form.card>h4:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--gold)}
 .workspace form.card>.grid:not(:first-of-type){margin-top:0}
 .reg-actions{margin:22px 0 0!important;padding:18px 28px!important;background:#f8f9fb;border-top:1px solid var(--line-2)}
-.workspace form.card>.flex.items-center.gap-3{margin:22px 0 0;padding:18px 28px;background:#f8f9fb;border-top:1px solid var(--line-2)}
+.workspace form.card>.flex.items-center.gap-3,.workspace .card>.flex.items-center.gap-3{margin:22px 0 0;padding:18px 28px;background:#f8f9fb;border-top:1px solid var(--line-2);justify-content:flex-start}
+.reg-actions,.network-form-actions{justify-content:flex-start}
+.reg-actions .reg-msg{margin-right:0}
+.workspace form.card>.flex.items-center.gap-3 .btn:first-child,.workspace .card>.flex.items-center.gap-3 .btn:first-child{margin-right:0}
 .reg-msg{font-size:12.5px;font-weight:600}
 .text-bni{color:var(--bni-red)}
 .reg-msg .text-bni,.reg-msg .text-green-700{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px}
@@ -149,7 +152,6 @@ select.inp.\!w-32,td select.inp{height:34px;font-size:12.5px;padding-right:34px;
 .reg-collapse[data-open="true"]{margin-bottom:26px}
 .form-inline{gap:12px}.form-inline .inp{height:44px}
 
-/* Checkbox / radio polish */
 input[type=checkbox],input[type=radio]{accent-color:var(--bni-red);width:16px;height:16px;cursor:pointer}
 
 /* ---------- Tables ---------- */
@@ -172,10 +174,10 @@ input[type=checkbox],input[type=radio]{accent-color:var(--bni-red);width:16px;he
 .tile{padding:20px!important;position:relative;overflow:hidden}
 .tile:after{content:"";position:absolute;right:-24px;top:-24px;width:84px;height:84px;border-radius:50%;background:radial-gradient(circle,#fff1f3,transparent 70%)}
 .tile-label{font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-.tile-value{font-family:var(--font-display);font-size:28px;font-weight:800;letter-spacing:-.03em;color:var(--ink);margin-top:6px;line-height:1.1}
+.tile-value{font-family:var(--font-display);font-size:24px;font-weight:800;letter-spacing:-.03em;color:var(--ink);margin-top:6px;line-height:1.1}
 .module-summary .card{padding:20px 22px}
 .module-summary small{font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-.module-summary b{font-family:var(--font-display);font-size:28px;font-weight:800;letter-spacing:-.03em}
+.module-summary b{font-family:var(--font-display);font-size:24px;font-weight:800;letter-spacing:-.03em}
 .filter-row.card{padding:14px 16px;align-items:center}
 .filter-row .inp{border:0;background:#f4f5f7;box-shadow:none}
 .filter-row .inp:focus{background:#fff;box-shadow:var(--ring),0 0 0 1px var(--bni-red) inset}
@@ -395,13 +397,11 @@ kbd{font-family:inherit;font-size:10.5px;font-weight:600;color:#6b7280;backgroun
 
 /* =====================================================================
    Original BNI colour scheme restored (white / red / grey).
-   Structure, spacing and components keep the premium treatment.
    ===================================================================== */
 body{background:#f5f6f8}
 .brand-bni{font-weight:900}
 .avatar{background:#e8edf2;color:#34445a;box-shadow:none}
 .avatar.lg{background:#e8edf2}
-/* sidebar: white, red active item (as before) */
 .sidebar{background:#fff;border-right:1px solid var(--line)}
 .side-label{color:#a0a5ad}
 .side-link{color:#454b55}
@@ -412,12 +412,10 @@ body{background:#f5f6f8}
 .side-promo b{color:var(--bni-red)}.side-promo strong{color:#242832}.side-promo p{color:#656b74}.side-promo span{color:#8b9098;letter-spacing:.04em}
 .sidebar-foot{color:#a4a8af}
 .sidebar::-webkit-scrollbar-thumb{background:#d3d6dc;background-clip:content-box}
-/* dashboard banner: original light gradient + red wedge */
 .welcome-banner{background:linear-gradient(100deg,#fff 0%,#f1f2f4 47%,#d9dce0 100%);border:1px solid #e8e9ec;height:150px}
 .welcome-banner:after{background:linear-gradient(120deg,#b51c2b,#d92335 70%,#a91828)}
 .welcome-copy h1{color:#20242a}.welcome-copy p{color:#626873}
 .welcome-copy .eyebrow{color:var(--bni-red)}.welcome-copy .eyebrow:before{background:var(--bni-red)}
-/* login: original red panel */
 .login-visual{background:linear-gradient(135deg,#a91525 0%,#cf2030 55%,#a8192a 100%)}
 .login-visual:before,.login-visual:after{border-color:#ffffff22}
 .login-brand span{color:#f2b8bd}.login-kicker{color:#ffe0e3}
@@ -425,7 +423,6 @@ body{background:#f5f6f8}
 .login-feature-row small{color:#ffe0e3}.login-feature-row i{background:#ffffff55}
 .login-visual-footer{color:#ffe0e3}
 .login-panel{background:#fff}
-/* toast: light card */
 .toast{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:0 14px 40px rgba(20,23,31,.16)}
 .toast-x{color:#9aa1ad}.toast-x:hover{color:var(--ink);background:#f1f2f4}
 .drawer-x{border-color:var(--line)!important;background:#f4f5f7!important;color:#555!important}
@@ -453,28 +450,23 @@ body{background:#f5f6f8}
 .guide{stroke:#cf2030;stroke-opacity:.35;stroke-dasharray:3 3}
 .avg-line{stroke:#9aa1ad;stroke-dasharray:5 5;stroke-width:1}.avg-text{font-size:10px;fill:#8b929b;font-weight:600}
 .pt{transition:r .15s}
-/* tooltip */
 .ctip{position:absolute;z-index:5;pointer-events:none;transform:translate(-50%,calc(-100% - 14px));background:#fff;border:1px solid #e3e5ea;border-radius:12px;padding:10px 13px;min-width:132px;box-shadow:0 12px 32px rgba(20,23,31,.16);font-size:12px;color:var(--ink);white-space:nowrap;animation:fade .12s}
 .ctip:after{content:"";position:absolute;left:50%;bottom:-6px;width:10px;height:10px;background:#fff;border-right:1px solid #e3e5ea;border-bottom:1px solid #e3e5ea;transform:translateX(-50%) rotate(45deg)}
 .ctip>b{display:block;font-size:12px;margin-bottom:6px;color:var(--ink)}
 .ctip-row{display:flex;align-items:center;gap:8px;color:var(--muted);padding:2px 0}
 .ctip-row i{width:9px;height:9px;border-radius:3px;flex-shrink:0}
 .ctip-row strong{margin-left:auto;padding-left:16px;color:var(--ink);font-variant-numeric:tabular-nums}
-/* legend as toggles */
 .legend button{display:inline-flex;align-items:center;gap:6px;border:1px solid #e6e8ec;background:#fff;border-radius:999px;padding:5px 12px;font-size:11.5px;font-weight:600;color:#4b535e;cursor:pointer;font-family:inherit;transition:.15s}
 .legend button:hover{border-color:#cfd3da}
 .legend button.is-off{opacity:.45;text-decoration:line-through}
 .legend button i{margin-right:0}
 .legend{gap:8px;margin-top:10px}
-/* horizontal bars */
-.hbar-row{grid-template-columns:minmax(90px,170px) 1fr minmax(64px,auto);cursor:default}
 .hbar-track{height:11px;background:#f1f2f4}
 .hbar-track i{transform-origin:left;animation:grow-x .8s cubic-bezier(.2,.8,.2,1) both}
 @keyframes grow-x{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 .hbar-row b{display:flex;justify-content:flex-end;align-items:baseline;gap:7px}
 .hbar-row b em{font-style:normal;font-size:10.5px;font-weight:600;color:var(--soft);min-width:30px;text-align:right}
 .hbar-row.is-top .hbar-label{color:var(--ink);font-weight:650}
-/* donut */
 .donut-seg{transition:stroke-width .18s,opacity .18s;cursor:pointer;animation:fade .6s ease both}
 .donut-bg{stroke:#eef0f3}
 .donut{animation:donut-in .8s cubic-bezier(.2,.8,.2,1) both}
@@ -484,32 +476,27 @@ body{background:#f5f6f8}
 .donut-legend li{padding:5px 8px;margin:0 -8px;border-radius:8px;transition:background .15s;cursor:default}
 .donut-legend li.is-hi{background:#f4f5f7}
 .donut-legend em{font-style:normal;font-size:11px;color:var(--soft);min-width:34px;text-align:right;margin-left:6px}
-/* metric cards */
 .metric-card{position:relative;overflow:hidden;justify-content:flex-start}
 .metric-copy{flex:1}
 .metric-copy strong{font-variant-numeric:tabular-nums}
 .metric-spark{width:96px;height:34px;flex-shrink:0;align-self:flex-end;margin-bottom:2px}
 .chart-hint{background:#f4f5f7;padding:3px 9px;border-radius:999px;font-weight:600}
 .empty-block.compact{padding:30px 16px}
-/* performance achievement */
 .ach{display:flex;align-items:center;gap:10px;min-width:150px}
 .ach-bar{flex:1;height:7px;border-radius:99px;background:#eceef1;overflow:hidden;min-width:60px}
 .ach-bar i{display:block;height:100%;border-radius:99px;background:#c3c8d0;animation:grow-x .8s cubic-bezier(.2,.8,.2,1) both;transform-origin:left}
 .ach-bar i.g{background:#1f9d6b}.ach-bar i.a{background:#f5a623}
 @media(max-width:760px){.metric-spark{display:none}.ctip{white-space:normal}}
 
-/* ---------- Fixes: nothing in a chart should be clipped ---------- */
 .panel,.chart-wrap,.chart-grid>*{min-width:0}
 .panel{overflow:visible}
 .col-svg,.donut svg,.spark{overflow:visible}
 .chart-wrap{width:100%}
-/* horizontal bars: label + value on one line, bar full-width below (no truncation) */
 .hbar-list{gap:14px}
 .hbar-row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"l v" "t t";row-gap:6px;column-gap:12px;align-items:baseline;font-size:12.5px}
 .hbar-label{grid-area:l;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35}
 .hbar-row b{grid-area:v;white-space:nowrap}
 .hbar-track{grid-area:t}
-/* donut centre text wraps instead of overflowing the ring */
 .donut{width:160px;height:160px}
 .donut-centre{padding:0 30px}
 .donut-centre small{font-size:10px;max-width:88px;margin:3px auto 0;overflow-wrap:anywhere}
@@ -517,12 +504,10 @@ body{background:#f5f6f8}
 .donut-wrap{flex-wrap:wrap}
 @media(max-width:560px){.donut{width:150px;height:150px}}
 
-/* ---------- Fix: Tailwind's built-in `.collapse{visibility:collapse}` was hiding the forms ---------- */
 .collapse{visibility:visible!important}
 .collapse[data-open="false"] .collapse-inner{visibility:hidden;transition:opacity .25s,visibility 0s .35s}
 .collapse[data-open="true"] .collapse-inner{visibility:visible;opacity:1}
 
-/* ---------- Dropdown chevrons & button icons ---------- */
 .tcard-chev{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;font-size:0;color:#8b929b;transition:transform .25s,background .15s,color .15s;flex-shrink:0}
 .tcard-head:hover .tcard-chev{background:#f4f5f7;color:var(--bni-red)}
 .tcard.is-open .tcard-chev{transform:rotate(180deg);background:#fff1f3;color:var(--bni-red)}
@@ -620,43 +605,50 @@ body{background:#f5f6f8}
 /* Consistent module surfaces, page spacing and dashboard hierarchy */
 .workspace,.workspace button,.workspace input,.workspace select,.workspace textarea,.workspace table{font-family:var(--font-display)}
 .workspace{font-size:13px;line-height:1.5}
+.workspace .card,.workspace .panel,.workspace .metric-card,.workspace .member-card,.workspace .tcard{font-size:13px;line-height:1.45}
+.workspace .inp,.workspace .btn-s,.workspace .td{font-size:13px}
 .workspace h1{font-size:27px;font-weight:800;line-height:1.2;letter-spacing:-.03em}
 .workspace .module-head{align-items:center;padding-bottom:18px;margin-bottom:22px}
 .workspace .module-head h1{font-size:27px;line-height:1.2}
 .workspace h2{font-size:17px;font-weight:700;line-height:1.3}
-.dashboard-page{display:grid;gap:18px}
+.dashboard-page{display:grid;gap:14px}
 .dashboard-page .metrics-grid,.dashboard-page .chart-grid{margin:0}
-.dashboard-page .metrics-grid{gap:14px}
-.dashboard-page .metric-card{min-height:136px;padding:18px 19px 42px;border-radius:16px;align-items:flex-start;position:relative}
+.dashboard-page .metrics-grid{gap:10px}
+.dashboard-page .metric-card{min-height:116px;padding:14px 15px 34px;border-radius:14px;align-items:flex-start;gap:10px;position:relative}
 .dashboard-page .metric-card:before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:linear-gradient(180deg,var(--bni-red),#ee9aa4);opacity:.85}
-.dashboard-page .metric-icon{width:46px;height:46px;border:1px solid #f6d5d9;color:var(--bni-red);background:linear-gradient(145deg,#fff7f8,#ffe9ec)}
-.dashboard-page .metric-copy{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0}
+.dashboard-page .metric-icon{width:40px;height:40px;border:1px solid #f6d5d9;color:var(--bni-red);background:linear-gradient(145deg,#fff7f8,#ffe9ec)}
+.dashboard-page .metric-copy{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
 .dashboard-page .metric-copy>span{font-size:11.5px;font-weight:650;line-height:1.35;color:var(--muted)}
-.dashboard-page .metric-copy>strong{font-size:clamp(21px,2vw,27px);line-height:1.1;white-space:nowrap;overflow-wrap:normal}
-.dashboard-page .metric-spark{position:absolute;right:14px;bottom:11px;width:78px;height:28px}
+.dashboard-page .metric-copy>strong{font-size:clamp(19px,1.8vw,23px);line-height:1.1;white-space:nowrap;overflow-wrap:normal}
+.dashboard-page .metric-spark{position:absolute;right:12px;bottom:9px;width:72px;height:26px}
 .dashboard-page .team-metrics-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 .dashboard-page .panel{border-radius:16px;box-shadow:var(--sh-1)}
-.dashboard-page .panel-heading{padding:18px 20px 14px}
-.dashboard-page .panel-heading h3{font-size:14px}
-.dashboard-page .chart-grid{gap:16px}
-.dashboard-page .donut-wrap{gap:22px}
-.dashboard-page .donut-legend li{padding-top:7px;padding-bottom:7px}
+.dashboard-page .panel-heading{padding:15px 17px 12px}
+.dashboard-page .panel-heading h3{font-size:15px}
+.dashboard-page .chart-grid{gap:12px}
+.dashboard-page .chart-grid.c2>.panel:only-child{grid-column:1/-1}
+.dashboard-stack{display:grid;align-content:start;gap:12px;min-width:0}
+.dashboard-page .donut-wrap{gap:18px}
+.dashboard-page .donut-legend li{padding-top:6px;padding-bottom:6px}
 .dashboard-page .welcome-row{min-width:0}
 .dashboard-page .welcome-banner{margin:0}
 
 .member-tabs{gap:8px;margin:0 0 18px;padding:0 0 10px}
 .member-tab{border-radius:9px;padding:10px 15px;font-family:var(--font-display);font-size:12.5px}
 .member-tab.active{box-shadow:0 5px 12px rgba(207,32,48,.18)}
-.network-form h2{margin:0!important;padding:22px 28px 0;font-size:16px}
-.network-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 20px;margin:0!important;padding:20px 28px 0}
-.network-fields>div{display:grid;align-content:start;min-width:0}
-.network-fields textarea.inp{min-height:112px}
-.network-form-actions{display:flex;align-items:center;gap:12px;min-height:68px;margin:20px 0 0!important;padding:14px 28px;background:#f8f9fb;border-top:1px solid var(--line-2)}
 .network-table-section{margin-top:16px}
-.login-footer{display:flex;align-items:center;justify-content:center;gap:4px;padding-top:8px;font-size:11px;line-height:1.5;color:var(--muted)}
+.login-footer{right:0;left:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding-top:8px;font-size:11px;line-height:1.5;color:var(--muted);text-align:center}
+.login-footer>span:last-child{display:inline-flex;align-items:center;justify-content:center;gap:5px}
 .login-footer a{color:var(--bni-red);font-weight:650;text-decoration:none}
 .login-footer a:hover{text-decoration:underline}
+.login-footer .digiworld-logo{height:27px;max-width:140px}
 .app-credit{font-size:11px}
+.digiworld-logo{display:block;width:auto;height:24px;object-fit:contain}
+.tyfcb-report-controls{padding:12px 20px 16px;background:#f8f9fa;border-bottom:1px solid #ccc}
+.tyfcb-tabs{display:flex;gap:8px;margin-bottom:12px}
+.tyfcb-tabs button{border:1px solid #dfe2e6;border-radius:7px;padding:8px 13px;background:#fff;color:#5f6368;font:inherit;font-size:12px;font-weight:650;cursor:pointer}
+.tyfcb-tabs button.active{border-color:var(--bni-red);background:var(--bni-red);color:#fff}
+.tyfcb-tabs button:focus-visible{outline:2px solid var(--bni-red);outline-offset:2px}
 
 .goals-content{display:grid;gap:18px;font-family:var(--font-display)}
 .goals-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
@@ -718,8 +710,6 @@ body{background:#f5f6f8}
   .dashboard-page .team-metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .goal-filters{align-items:stretch;flex-direction:column}
   .goal-filters .inp,.goal-filters select.inp{width:100%}
-  .network-fields{gap:14px}
-  .network-form-actions{align-items:flex-start;flex-direction:column}
 }
 @media(max-width:560px){
   .workspace .module-head{align-items:flex-start}
@@ -738,33 +728,33 @@ body{background:#f5f6f8}
   .goal-table-head{padding:16px}
   .goal-filters{align-items:stretch;flex-direction:column}
   .goal-filters .inp,.goal-filters select.inp{width:100%}
-  .network-fields{grid-template-columns:1fr;padding:16px 18px 0}
-  .network-form h2{padding:18px 18px 0}
-  .network-form-actions{padding:14px 18px}
   .member-tab{padding:9px 10px;font-size:11.5px}
 }
+
 /* ---------- App Footer Credit ---------- */
 .app-credit {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 4px;
+  gap: 7px;
   margin-top: 40px;
   padding: 20px 0;
-  font-size: 18px;
-  color: var(--muted); /* Grey text */
+  font-size: 12px;
+  color: var(--muted);
   border-top: 1px solid var(--line);
 }
-
 .app-credit a {
-  color: var(--bni-red); /* Red link */
+  display: inline-flex;
+  align-items: center;
+  color: var(--bni-red);
   font-weight: 600;
   text-decoration: none;
 }
-
 .app-credit a:hover {
   text-decoration: underline;
 }
+.app-credit img.digiworld-logo { height: 16px; max-width: 100px; }
+
 /* Hide the red eyebrow text everywhere */
 .eyebrow {
   display: none !important;
@@ -776,29 +766,27 @@ body{background:#f5f6f8}
   padding-bottom: 0 !important;
   margin-bottom: 24px !important;
 }
+
 /* Force the filter row to utilize full width */
 .filter-row {
   display: flex !important;
   width: 100% !important;
   gap: 16px !important;
 }
-
-/* Make the search input take up all remaining space */
-.filter-row .inp:not(select), 
+.filter-row .inp:not(select),
 .filter-row input[type="text"],
 .filter-row input[type="search"] {
   flex: 1 1 auto !important;
   width: 100% !important;
   max-width: none !important;
 }
-
-/* Ensure the dropdown doesn't shrink and stays a nice size */
-.filter-row select, 
+.filter-row select,
 .filter-row .filter-select {
   flex: 0 0 260px !important;
   width: 260px !important;
   max-width: 260px !important;
 }
+
 /* ---------- Pagination ---------- */
 .pagination {
   display: flex;
@@ -854,9 +842,10 @@ body{background:#f5f6f8}
   font-size: 12px;
   padding: 0 4px;
 }
+
 /* Update Tiles for Icons and Full Width */
 .tile::after {
-  display: none !important; /* Removes the old pink circle in the corner */
+  display: none !important;
 }
 .tile {
   padding: 20px !important;
@@ -867,5 +856,140 @@ body{background:#f5f6f8}
   box-shadow: var(--sh-2);
 }
 .tile-icon {
-  border: 1px solid #fbd0d6; /* Adds a subtle border to the icon box */
+  border: 1px solid #fbd0d6;
+}
+
+/* ================= Business Network — neat spacing ================= */
+.network-form{padding:0!important;overflow:hidden}
+.network-form-title{
+  margin:0;
+  padding:20px 28px 16px;
+  font-size:16px;font-weight:700;
+  border-bottom:1px solid var(--line-2);
+  background:linear-gradient(180deg,#fbfbfc,#fff);
+}
+.network-fields{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px 22px;
+  margin:0!important;
+  padding:22px 28px 6px;
+}
+.network-field{display:flex;flex-direction:column;min-width:0}
+.network-field .lbl{margin-bottom:6px;line-height:1.2}
+.network-field .inp{width:100%}
+.network-field textarea.inp{min-height:96px;line-height:1.5}
+.network-form-actions{
+  display:flex;align-items:center;gap:12px;
+  margin:16px 0 0!important;
+  padding:14px 28px;
+  background:#f8f9fb;
+  border-top:1px solid var(--line-2);
+}
+.network-form-actions .btn,
+.network-form-actions .btn-s{height:40px}
+.network-form-actions .reg-msg{margin-left:2px}
+.network-sno{
+  width:70px;text-align:center;
+  font-variant-numeric:tabular-nums;
+  font-weight:650;
+  color:var(--ink-2);
+}
+.network-name-cell{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;min-width:0;
+}
+.network-name{min-width:0;overflow-wrap:anywhere}
+.network-name-cell .btn-s{height:30px;padding:0 10px;font-size:13px;flex-shrink:0}
+.network-data-table{table-layout:fixed;min-width:880px}
+.network-data-table th:nth-child(1),.network-data-table td:nth-child(1){width:8%}
+.network-data-table th:nth-child(2),.network-data-table td:nth-child(2){width:15%}
+.network-data-table th:nth-child(3),.network-data-table td:nth-child(3){width:20%}
+.network-data-table th:nth-child(4),.network-data-table td:nth-child(4),
+.network-data-table th:nth-child(5),.network-data-table td:nth-child(5){width:28.5%}
+.network-wrap{
+  white-space:normal!important;
+  min-width:0;
+  line-height:1.5;
+  vertical-align:top;
+}
+@media(max-width:760px){
+  .network-form-actions{align-items:flex-start;flex-direction:column}
+}
+@media(max-width:560px){
+  .network-fields{grid-template-columns:1fr;gap:14px;padding:18px}
+  .network-form-title{padding:16px 18px 14px}
+  .network-form-actions{padding:14px 18px}
+  .network-wrap{min-width:0}
+}
+/* ---------- Team Members inside Cards ---------- */
+.team-card-members {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 250px;
+  overflow-y: auto;
+  border-top: 1px solid #eceef1;
+  padding-top: 12px;
+}
+
+.team-card-member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px dashed #f4f5f7;
+}
+
+.team-card-member:last-child {
+  border-bottom: none;
+}
+
+.team-card-member-avatar {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bni-red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.team-card-member-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  min-width: 0;
+  flex: 1;
+}
+
+.team-card-member-info b {
+  font-size: 12px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-card-member-info small {
+  font-size: 10.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-card-member-empty {
+  font-size: 12.5px;
+  color: var(--soft);
+  font-style: italic;
+  padding: 10px 0;
+  text-align: center;
 }

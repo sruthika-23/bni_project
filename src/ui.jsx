@@ -63,7 +63,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange, totalItems, itemsPe
 }
 
 // --- Table Component with built-in pagination ---
-export const Table = ({ head, rows, itemsPerPage = 10 }) => {
+export const Table = ({ head, rows, itemsPerPage = 10, className = '' }) => {
   const [page, setPage] = useState(1)
   
   // Reset to page 1 whenever the rows data changes (e.g. user types in a search bar)
@@ -76,7 +76,7 @@ export const Table = ({ head, rows, itemsPerPage = 10 }) => {
   return (
     <div className="card !p-0 overflow-hidden flex flex-col">
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className={`w-full ${className}`.trim()}>
           <thead><tr>{head.map(h => <th key={h} className="th">{h}</th>)}</tr></thead>
           <tbody>
             {currentRows.length ? currentRows : (
